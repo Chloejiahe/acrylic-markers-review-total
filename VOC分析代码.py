@@ -515,14 +515,14 @@ CLASSIFICATION_RULES = {
         }
 }
 
-# --- 3. 数据加载函数---
+# --- 3. 数据加载函数 (已修改：统一为单一文件入口) ---
 @st.cache_data
 def load_raw_data():
+    # === 修改核心：只读取一个名为 '常青款.xlsx' 的文件，不再区分销量和趋势 ===
+    # 这里的 key 是文件名，value 是 (主类目, 子类目名称)
+    # 子类目统一命名为 "全量数据"，避免页面出现分类
     data_map = {
-        "kids_sales.xlsx": ("儿童丙烯", "🔥 高销量"),
-        "kids_trending.xlsx": ("儿童丙烯", "📈 高增长趋势"),
-        "large_capacity_sales.xlsx": ("大容量丙烯", "🔥 高销量"),
-        "large_capacity_trending.xlsx": ("大容量丙烯", "📈 高增长趋势")
+        "常青款.xlsx": ("常青款", "全量数据")
     }
     
     combined = []
@@ -530,13 +530,12 @@ def load_raw_data():
         if os.path.exists(filename):
             df_temp = pd.read_excel(filename)
             
-            # --- 修复 1: 自动寻找列名增加容错性 ---
+            # --- 自动寻找列名 ---
             col_name = next((c for c in ['Content', 'Review Body', 'Body', 'content'] if c in df_temp.columns), df_temp.columns[0])
             asin_col = next((c for c in ['ASIN', 'Parent ASIN', 'Product ID', 'Asin', 'child_asin'] if c in df_temp.columns), None)
             
-            # --- 修复 2: 映射逻辑（放在拆分前，效率更高且不易出错） ---
+            # --- 映射逻辑 ---
             if asin_col:
-                # 关键：强制转字符串、去空格、转大写
                 df_temp['sku_spec'] = df_temp[asin_col].astype(str).str.strip().str.upper().map(USER_CATEGORY_MAPPING).fillna("Other-Unmapped")
             else:
                 df_temp['sku_spec'] = "Unknown-Spec"
@@ -562,13 +561,12 @@ def load_raw_data():
             df_exploded['main_category'] = info[0]
             df_exploded['sub_type'] = info[1]
             
-            # 此时 sku_spec 已经作为列被 explode 自动带下来了
             combined.append(df_exploded)
     
     return pd.concat(combined, ignore_index=True) if combined else pd.DataFrame()
     
 
-# --- 4. 核心分析逻辑 (优化版：引入评分加权与深度透视) ---
+# --- 4. 核心分析逻辑 (保持不变) ---
 def extract_advanced_features(df):
     """为每一句评论打上画像、场景、动机标签"""
     processed_df = df.copy()
@@ -640,24 +638,25 @@ st.title("🎨 丙烯马克笔消费者洞察看板")
 df = load_raw_data()
 
 if not df.empty:
-    # 侧边栏
+    # 侧边栏 (由于只有一个类目，这里其实只是做个筛选的样子，实际只有一个选项)
     target = st.sidebar.radio("🎯 选择分析类目", df['main_category'].unique())
     filtered = df[df['main_category'] == target]
+    
+    # 此时 sub_types 应该只有一个值 ["全量数据"]
     sub_types = filtered['sub_type'].unique()
 
-    # 遍历子类型，采用垂直流布局
+    # 遍历子类型 (这里只会循环一次)
     for sub_name in sub_types:
+        # 为了美观，如果只有一种数据，可以去掉顶部的分隔空白，或者保留
         st.write("") 
-        st.write("")
-        st.divider() # 画一条醒目的水平分割线
         
-        # 2. 使用 HTML 定义一个巨大、带背景色的标题块
+        # 头部标题块
         st.markdown(f"""
             <div style="
                 background-color: #f8f9fa; 
                 padding: 20px; 
                 border-radius: 15px; 
-                margin-top: 40px; 
+                margin-top: 20px; 
                 margin-bottom: 30px; 
                 border-left: 10px solid #1f77b4;
                 box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
@@ -668,10 +667,11 @@ if not df.empty:
                     font-size: 36px; 
                     font-weight: bold;
                 ">
-                    {sub_name} 深度洞察
+                    常青款深度洞察
                 </h2>
             </div>
         """, unsafe_allow_html=True)
+        
         sub_df = filtered[filtered['sub_type'] == sub_name]
         analysis_res = analyze_sentiments(sub_df)
         
@@ -680,7 +680,6 @@ if not df.empty:
         total_pos = analysis_res["亮点"].sum()
         total_neg = analysis_res["痛点"].sum()
         health_rate = round(total_pos / (total_pos + total_neg) * 100) if (total_pos + total_neg) > 0 else 0
-        # 计算该子类的平均分
         avg_star = round(sub_df['Rating'].mean(), 2) if 'Rating' in sub_df.columns else 0
         
         m1.metric("亮点总提及", total_pos)
@@ -688,12 +687,11 @@ if not df.empty:
         m3.metric("整体健康度", f"{health_rate}%")
         m4.metric("平均星级评分", f"{avg_star} ⭐")
 
-        # 💡 新增：维度雷达图
+        # 雷达图
         st.write("")
-        col_radar, col_spacer = st.columns([2, 1]) # 让雷达图稍微靠左
+        col_radar, col_spacer = st.columns([2, 1]) 
         with col_radar:
             fig_radar = go.Figure()
-            # 建议使用维度评分或满意度作为雷达半径
             fig_radar.add_trace(go.Scatterpolar(
                 r=analysis_res['满意度'].tolist(),
                 theta=analysis_res['维度'].tolist(),
@@ -704,46 +702,37 @@ if not df.empty:
             fig_radar.update_layout(
                 polar=dict(radialaxis=dict(visible=True, range=[0, 105])),
                 showlegend=False,
-                title=f"【{sub_name}】维度健康度雷达图",
+                title=f"维度健康度雷达图",
                 height=400
             )
             st.plotly_chart(fig_radar, use_container_width=True, key=f"radar_{sub_name}")
         
-        # --- 优化后的中间图表部分：柱状图 + 满意度折线 ---
-
-        # 1. 创建带双 Y 轴的图表
+        # 柱状图 + 折线图
         fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-        # 2. 添加亮点柱状图
+        
         fig.add_trace(
             go.Bar(name='亮点', x=analysis_res['维度'], y=analysis_res['亮点'], 
                    marker_color='#2ecc71', text=analysis_res['亮点'], textposition='auto'),
             secondary_y=False
         )
-
-        # 3. 添加痛点柱状图
         fig.add_trace(
             go.Bar(name='痛点', x=analysis_res['维度'], y=analysis_res['痛点'], 
                    marker_color='#e74c3c', text=analysis_res['痛点'], textposition='auto'),
             secondary_y=False
         )
-
-        # 4. 添加满意度折线图（显示具体分数）
         fig.add_trace(
             go.Scatter(
                 name='满意度 (%)', 
                 x=analysis_res['维度'], 
                 y=analysis_res['满意度'],
-                mode='lines+markers+text', # 线、点、文字同时显示
-                text=analysis_res['满意度'].apply(lambda x: f"{x}%"), # 格式化文字
-                textposition="top center", # 文字显示在点上方
+                mode='lines+markers+text', 
+                text=analysis_res['满意度'].apply(lambda x: f"{x}%"), 
+                textposition="top center", 
                 line=dict(color='#3498db', width=3),
                 marker=dict(size=8)
             ),
-            secondary_y=True # 使用右侧 Y 轴
+            secondary_y=True 
         )
-            
-        # 在 fig.add_trace(go.Scatter(...)) 之后添加
         fig.add_trace(
             go.Scatter(
                 name='维度评分 (1-5)', 
@@ -753,48 +742,31 @@ if not df.empty:
                 line=dict(color='#f1c40f', width=2, dash='dot'),
                 marker=dict(symbol='star', size=10)
             ),
-            secondary_y=True # 同样挂载在右轴，注意右轴范围建议设为 [0, 5] 或 [0, 100] 缩放
+            secondary_y=True 
         )
         
-        # 修改右侧 Y 轴范围以兼容百分比和 5 分制（建议将评分乘以 20 映射到 100 分制）
-        fig.update_yaxes(title_text="满意度/评分映射 (%)", range=[0, 110], secondary_y=True)
-
-        # 5. 图表样式配置
         fig.update_layout(
-            title=f"【{sub_name}】各维度情感倾向分布与满意度趋势",
+            title=f"各维度情感倾向分布与满意度趋势",
             barmode='group',
             height=600,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-
-        # 设置左轴为提及次数，右轴为百分比
         fig.update_yaxes(title_text="提及次数", secondary_y=False)
         fig.update_yaxes(title_text="满意度分数 (%)", range=[0, 110], secondary_y=True)
 
         st.plotly_chart(fig, use_container_width=True, key=f"chart_{sub_name}")
 
-        # 6. 底部数据下钻：找出所有“及格线以下”的隐患
+        # 竞品弱点
         st.markdown("🔍 **竞品弱点靶向追踪 (Opportunity Analysis)**")
-        
-        # --- 新增：机会指数计算说明说明 ---
         with st.expander("📊 如何解读机会指数？"):
-            st.write("机会指数是我们衡量“竞品失分严重程度”与“市场需求规模”的综合指标：")
-            st.latex(r"Opportunity Index = \text{Pain Frequency} \times (5 - \text{Average Rating})")
-            st.caption("""
-            - **痛点提及频次 (Pain Frequency)**：代表该问题的普遍性，打低分的人越多，指数越高。
-            - **5 - 平均评分**：代表该问题的严重性。
-            - **判定标准**：指数越高，代表该维度的“缺口”越大。
-            """)
-        # ----------------------------
+            st.write("机会指数是我们衡量“竞品失分严重程度”与“市场需求规模”的综合指标。指数越高，代表该维度的“缺口”越大。")
         
-        # 使用我们计算的“机会指数”进行排序，选出前 3 个最值得攻击的弱点
         pain_df = analysis_res.sort_values("机会指数", ascending=False).head(3)
 
         if not pain_df.empty:
             cols = st.columns(3)
             for idx, (_, row) in enumerate(pain_df.iterrows()):
                 with cols[idx]:
-                    # 颜色基于评分：评分越低越红
                     color = "#c0392b" if row['维度评分'] < 3.5 else "#d35400"
                     st.markdown(f"""
                     <div style="padding:15px; border-radius:10px; border-left: 8px solid {color}; 
@@ -805,7 +777,7 @@ if not df.empty:
                             <span style="color:{color}; font-weight:bold;">得分: {row['维度评分']} ⭐</span>
                         </div>
                         <p style="color:gray; font-size:11px; margin-bottom:10px;">
-                           机会指数: {row['机会指数']} (数值越高越建议切入)
+                           机会指数: {row['机会指数']}
                         </p>
                         <p style="font-size:14px;"><b>核心投诉根因：</b><br/>
                         <span style="color:#2c3e50;">{row['痛点分布']}</span></p>
@@ -814,20 +786,16 @@ if not df.empty:
         else:
             st.success("✨ 所有维度表现良好，满意度均在 60% 以上！")
 
-        # --- 7. 用户原声词云分析 (情感对比版) ---
+        # 词云
         st.markdown("---")
-        st.markdown("### ☁️ 竞品原声情感对比词云")
+        st.markdown("### ☁️ 原声情感对比词云")
         
-        # 停用词配置
         eng_stopwords = set(STOPWORDS)
         custom_garbage = {'marker', 'markers', 'pen', 'pens', 'product', 'really', 'will', 'bought', 'set', 'get', 'much', 'even', 'color', 'paint', 'colors', 'work', 'good', 'great', 'love', 'used', 'using', 'actually', 'amazon', 'br'}
         eng_stopwords.update(custom_garbage)
 
-        # 1. 准备数据
         pos_df = sub_df[sub_df['Rating'] >= 4.0]
-        # 增加清洗：转小写，防止因为大小写导致重复
         pos_text = " ".join(pos_df['s_text'].astype(str).str.lower().tolist())
-        
         neg_df = sub_df[sub_df['Rating'] < 4.0]
         neg_text = " ".join(neg_df['s_text'].astype(str).str.lower().tolist())
 
@@ -835,46 +803,26 @@ if not df.empty:
 
         with col_left:
             st.subheader("🟢 高分区 (4.0-5.0 ⭐)")
-            st.caption(f"样本量: {len(pos_df)}")
             if len(pos_text.strip()) > 30:
-                wc_pos = WordCloud(
-                    width=500, height=400, background_color='white',
-                    colormap='Greens', max_words=50, stopwords=eng_stopwords,
-                    collocations=True,
-                    random_state=42  # 固定随机种子
-                ).generate(pos_text)
-                # 使用 unique 的 key 强制刷新渲染
-                st.image(wc_pos.to_array(), use_container_width=True, caption="优势关键词")
+                wc_pos = WordCloud(width=500, height=400, background_color='white', colormap='Greens', max_words=50, stopwords=eng_stopwords, collocations=True, random_state=42).generate(pos_text)
+                st.image(wc_pos.to_array(), use_container_width=True)
             else:
-                st.info("💡 样本量不足以生成高分词云")
+                st.info("样本量不足")
 
         with col_right:
             st.subheader("🔴 低分区 (1.0-3.9 ⭐)")
-            st.caption(f"样本量: {len(neg_df)}")
             if len(neg_text.strip()) > 30:
-                wc_neg = WordCloud(
-                    width=500, height=400, background_color='white',
-                    colormap='Reds', max_words=50, stopwords=eng_stopwords,
-                    collocations=True,
-                    random_state=24  # 使用不同的随机种子区分
-                ).generate(neg_text)
-                st.image(wc_neg.to_array(), use_container_width=True, caption="痛点关键词")
+                wc_neg = WordCloud(width=500, height=400, background_color='white', colormap='Reds', max_words=50, stopwords=eng_stopwords, collocations=True, random_state=24).generate(neg_text)
+                st.image(wc_neg.to_array(), use_container_width=True)
             else:
-                st.success("✨ 表现稳健，无明显低分痛点词")
-                
-        # --- 8. 原声溯源 (Truth Laboratory) ---
+                st.success("无明显低分痛点词")
+
+        # 原声溯源
         st.write("")
-        with st.expander(f"🔍 深度探查：{sub_name} 的真实用户评价回溯"):
-            # 加上 key
-            target_dim = st.selectbox(
-                "选择想要探查的痛点维度:", 
-                analysis_res['维度'].tolist(), 
-                key=f"select_dim_{sub_name}"
-            )
-            
-            # ... 提取关键词部分 ...
+        with st.expander(f"🔍 深度探查：真实用户评价回溯"):
+            target_dim = st.selectbox("选择想要探查的痛点维度:", analysis_res['维度'].tolist(), key=f"select_dim_{sub_name}")
             neg_keywords = []
-            if target_dim in FEATURE_DIC: # 增加安全检查
+            if target_dim in FEATURE_DIC:
                 for tag, keys in FEATURE_DIC[target_dim].items():
                     if '负面' in tag or '不满' in tag:
                         neg_keywords.extend(keys)
@@ -885,12 +833,8 @@ if not df.empty:
                     st.info("该维度暂无有效的负面关键词。")
                 else:
                     search_pattern = '|'.join(valid_keys)
-                    vocal_df = sub_df[
-                        (sub_df['Rating'] <= 3) & 
-                        (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))
-                    ][['Rating', 's_text']].drop_duplicates().head(10)
-                    
-                    if not vocal_df.empty: # (缩进: 20空格)
+                    vocal_df = sub_df[(sub_df['Rating'] <= 3) & (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))][['Rating', 's_text']].drop_duplicates().head(10)
+                    if not vocal_df.empty:
                         st.warning(f"以下是用户在【{target_dim}】维度的真实痛点原声：")
                         for i, (_, row) in enumerate(vocal_df.iterrows()):
                             st.markdown(f"**[{row['Rating']}⭐]** {row['s_text']}")
@@ -898,117 +842,45 @@ if not df.empty:
                     else:
                         st.info("该维度下暂未捕捉到高代表性的负面原声评价。")
             else:
-                # 确保这个 else 与 if neg_keywords: 对齐
                 st.write("该维度暂无定义的负面关键词。")
 
         st.markdown("---")
         
-        # --- 数据预处理 ---
+        # 深度市场解析
         sub_df = extract_advanced_features(sub_df)
-
         st.markdown("### 🎯 深度市场深度解析 (Advanced Market Insight)")
-        
-        # --- 板块 1: 多维用户画像分布 (独占一行) ---
         st.markdown("#### 👥 用户画像分布 (Demographic Analysis)")
         
-        # 1.1 交互切换：选择分析维度
-        persona_dim = st.radio(
-            "选择画像分析维度:",
-            options=["用户身份", "性别分布", "年龄层次"],
-            horizontal=True,
-            key=f"persona_toggle_{sub_name}"
-        )
-        
-        # 维度映射逻辑
-        dim_map = {
-            "用户身份": "feat_User_Role",
-            "性别分布": "feat_Gender",
-            "年龄层次": "feat_Age_Group"
-        }
+        persona_dim = st.radio("选择画像分析维度:", options=["用户身份", "性别分布", "年龄层次"], horizontal=True, key=f"persona_toggle_{sub_name}")
+        dim_map = {"用户身份": "feat_User_Role", "性别分布": "feat_Gender", "年龄层次": "feat_Age_Group"}
         target_col = dim_map[persona_dim]
         
-        # 1.2 数据清洗与统计
-        # 统一剔除“未提及”或空值
-        persona_df = sub_df[
-            (sub_df[target_col].notna()) & 
-            (sub_df[target_col] != "未提及") & 
-            (sub_df[target_col] != "Unknown")
-        ][target_col].value_counts().reset_index()
+        persona_df = sub_df[(sub_df[target_col].notna()) & (sub_df[target_col] != "未提及") & (sub_df[target_col] != "Unknown")][target_col].value_counts().reset_index()
 
         if not persona_df.empty:
-            # 1.3 绘制环形图
-            fig_pie = go.Figure(data=[go.Pie(
-                labels=persona_df[target_col], 
-                values=persona_df['count'], 
-                hole=.45,
-                marker=dict(colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A']),
-                # 为了防止文字在图中太乱，这里只留百分比，文字看右侧图例
-                textinfo='percent' 
-            )])
-            
-            fig_pie.update_layout(
-                title=dict(
-                    text=f"核心访客：{persona_dim}分布",
-                    x=0.5, # 标题居中
-                    xanchor='center'
-                ),
-                height=450,
-                showlegend=True,
-                # 优化图例：放置在右侧垂直排列，避免遮挡
-                legend=dict(
-                    orientation="v",
-                    yanchor="middle",
-                    y=0.5,
-                    xanchor="left",
-                    x=1.05,
-                    font=dict(size=12)
-                ),
-                # 调整边距：给右侧图例预留 150px 空间，给标题预留空间
-                margin=dict(t=80, b=40, l=40, r=180)
-            )
+            fig_pie = go.Figure(data=[go.Pie(labels=persona_df[target_col], values=persona_df['count'], hole=.45, marker=dict(colors=['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A']), textinfo='percent')])
+            fig_pie.update_layout(title=dict(text=f"核心访客：{persona_dim}分布", x=0.5, xanchor='center'), height=450, showlegend=True)
             st.plotly_chart(fig_pie, use_container_width=True)
-            
-            # 补充一个简单的业务洞察说明
             top_val = persona_df.iloc[0][target_col]
             top_pct = (persona_df.iloc[0]['count'] / persona_df['count'].sum() * 100).round(1)
-            st.info(f"📊 **市场洞察：** 当前子类目中，**{top_val}** 是最主流的群体，占比高达 **{top_pct}%**。建议营销侧重点针对该群体进行视觉风格调整。")
+            st.info(f"📊 **市场洞察：** **{top_val}** 是最主流的群体，占比高达 **{top_pct}%**。")
         else:
-            st.warning(f"🔍 暂无明确的 {persona_dim} 维度数据。请检查原始评论中是否包含相关标签。")
+            st.warning(f"🔍 暂无明确的 {persona_dim} 维度数据。")
 
         st.markdown("---")
-
-
-        # --- 板块 3: 核心痛点维度评分矩阵 (人群动态维度优化版) ---
         st.markdown("#### 🚀 核心痛点维度评分矩阵 (Dynamic Persona-Pain Matrix)")
         
-        # --- 新增解说板块 ---
         with st.container():
-            col_info1, col_info2 = st.columns([2, 1])
-            with col_info1:
-                st.markdown("""
-                **💡 矩阵读法指南：**
-                * **坐标轴：** 横轴、纵轴及气泡大小代表该人群最关注的三个痛点维度。
-                * **气泡位置：** 越靠近**右上角**，说明该 产品 表现越完美；靠近**左下角**则是有缺陷。
-                * **颜色深浅：** 综合评分体现，**绿色**代表安全，**红色**代表该 SKU 存在严重负面评价。
-                """)
-            with col_info2:
-                st.info("""
-                **🎯 决策价值：**
-                通过切换下方【身份标签】，可以发现不同人群对 产品 的不满点是否存在**错位**，从而寻找特定人群的切入机会。
-                """)
-                
-        # 预先获取全局 Top 3 维度作为兜底
+            st.info("**💡 矩阵说明：** 通过切换下方【身份标签】，可以发现不同人群对产品的不满点是否存在错位。")
+
         global_top_3 = analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
-        # 兜底：如果全局维度都不够3个，手动补齐
         while len(global_top_3) < 3:
             global_top_3.append("其他")
 
         if not analysis_res.empty:
-            # 获取样本量最大的前 3 个身份
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
-                # 1. 维度对齐逻辑：确保始终有 3 个有效维度
                 valid_local = [d for d in local_dims if d and d != "未提及"]
                 final_dims = valid_local + [d for d in global_top_3 if d not in valid_local]
                 d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
@@ -1018,14 +890,12 @@ if not df.empty:
                 
                 for sku in all_skus:
                     sku_df = data_source[data_source['sku_spec'] == sku]
-                    
                     def get_metric(target_df, dimension):
                         if dimension == "其他": return 3.0, 0
                         keywords = []
                         if dimension in FEATURE_DIC:
                             for sub_cat in FEATURE_DIC[dimension].values():
                                 keywords.extend(sub_cat)
-                        
                         if not keywords: return None, 0
                         pat = '|'.join([re.escape(k) for k in keywords if k.strip()])
                         matched = target_df[target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)]
@@ -1035,13 +905,11 @@ if not df.empty:
                     sc_y, _ = get_metric(sku_df, d_y)
                     sc_b, _ = get_metric(sku_df, d_b)
                     
-                    # 只要有一维度有分就记录
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
                         plot_data.append({
                             'sku': str(sku),
                             'score_x': sc_x if sc_x is not None else 3.0,
                             'score_y': sc_y if sc_y is not None else 3.0,
-                            # 【修改点1】明确保存一个用于显示的原始数值，避免 None
                             'score_bubble_val': sc_b if sc_b is not None else 3.0 
                         })
                 
@@ -1052,63 +920,28 @@ if not df.empty:
 
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'], 
-                    y=res_df['score_y'],
-                    mode='markers+text',
-                    text=res_df['sku'],
-                    textposition="top center",
-                    # 【修改点2】将原始数值传入 customdata
-                    customdata=res_df['score_bubble_val'], 
-                    marker=dict(
-                        # 气泡大小依然用数值控制，但为了视觉效果乘倍率
-                        size=res_df['score_bubble_val'] * 12, 
-                        color=res_df['score_x'] + res_df['score_y'],
-                        colorscale='RdYlGn', showscale=True,
-                        line=dict(width=1, color='DarkSlateGrey')
-                    ),
-                    # 【修改点3】hovertemplate 读取 customdata 而不是计算 marker.size
-                    hovertemplate = (
-                        f"<b>%{{text}}</b><br>"
-                        f"{d_x}: %{{x:.2f}}<br>"
-                        f"{d_y}: %{{y:.2f}}<br>"
-                        f"{d_b}(气泡): %{{customdata:.2f}}<extra></extra>"
-                    )
+                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
+                    text=res_df['sku'], textposition="top center", customdata=res_df['score_bubble_val'], 
+                    marker=dict(size=res_df['score_bubble_val'] * 12, color=res_df['score_x'] + res_df['score_y'], colorscale='RdYlGn', showscale=True, line=dict(width=1, color='DarkSlateGrey')),
+                    hovertemplate = (f"<b>%{{text}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(气泡): %{{customdata:.2f}}<extra></extra>")
                 ))
-                
-                fig.update_layout(
-                    title=f"{title_label}：维度表现分布",
-                    xaxis=dict(title=f"{d_x} 评分 (1-5)", range=[0.8, 5.2]),
-                    yaxis=dict(title=f"{d_y} 评分 (1-5)", range=[0.8, 5.2]),
-                    height=500
-                )
-                
-                st.plotly_chart(fig, width="stretch", key=f"bubble_{sub_name}_{suffix}")
+                fig.update_layout(title=f"{title_label}：维度表现分布", xaxis=dict(title=f"{d_x} 评分 (1-5)", range=[0.8, 5.2]), yaxis=dict(title=f"{d_y} 评分 (1-5)", range=[0.8, 5.2]), height=500)
+                st.plotly_chart(fig, use_container_width=True, key=f"bubble_{sub_name}_{suffix}")
 
-            # --- Tabs 展现层 ---
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
-            
             with tab_list[0]:
                 draw_sku_bubble_chart(sub_df, "全量数据", "total", global_top_3)
-            
             for i, role in enumerate(top_roles):
                 with tab_list[i+1]:
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
-                    
-                    # 动态识别该人群关注维度
                     role_neg_text = " ".join(role_sub[role_sub['s_pol'] < 0]['s_text'].astype(str).tolist())
                     dim_counts = {}
                     for dim, mapping in FEATURE_DIC.items():
                         all_keys = [k for sub in mapping.values() for k in sub]
                         count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
                         if count > 0: dim_counts[dim] = count
-                    
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
-                    
-                    st.caption(f"🎯 **{role}** 的核心关注维度：{', '.join(role_specific_dims) if role_specific_dims else '通用维度'}")
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}", role_specific_dims)
-            
-        
-
 else:
+    st.info("💡 请确保目录下存在 【常青款.xlsx】 文件。")
 
-    st.info("💡 请确保数据加载正确。")
