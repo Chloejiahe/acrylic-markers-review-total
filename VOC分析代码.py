@@ -900,6 +900,7 @@ if not df.empty:
                 for sku in all_skus:
                     sku_df = data_source[data_source['sku_spec'] == sku]
                     
+                    # 内部辅助函数获取评分指标
                     def get_metric(target_df, dimension):
                         if dimension == "其他": return 3.0, 0
                         keywords = []
@@ -916,8 +917,9 @@ if not df.empty:
                     sc_b, _ = get_metric(sku_df, d_b)
                     
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                        # 优化：提取 Brand + ASIN 作为短名字展示
-                        parts = str(sku).split('-')
+                        # 适配 USER_CATEGORY_MAPPING 的下划线格式
+                        parts = str(sku).split('_')
+                        # 气泡图短名：品牌-ASIN
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
                         
                         plot_data.append({
@@ -933,7 +935,7 @@ if not df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
                     return
 
-                # 1. 绘制气泡图
+                # --- 1. 绘制气泡图 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
                     x=res_df['score_x'], 
@@ -949,7 +951,7 @@ if not df.empty:
                         showscale=True, 
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(大小): %{{marker.size}}<extra></extra>")
+                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}: %{{marker.size}}<extra></extra>")
                 ))
                 fig.update_layout(
                     title=f"{title_label}：维度表现分布", 
@@ -959,29 +961,22 @@ if not df.empty:
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 2. 绘制参数对照表 (修正分隔符逻辑) ---
+                # --- 2. 绘制参数对照表 ---
                 st.markdown("##### 📋 产品参数详细对照表")
                 table_rows = []
-                # 严格对应您 Excel 的 9 列标题
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
                 for full_sku in res_df['full_sku']:
-                    # 改用竖线拆分，防止价格区间 (1.85-3.33) 被切断
                     parts = str(full_sku).split('_')
-                    
-                    # 自动填充逻辑：如果 parts 长度不足，自动补空格，确保不会对错位
                     row_data = {}
                     for i, col in enumerate(columns_list):
                         if i < len(parts):
                             row_data[col] = parts[i].strip()
                         else:
-                            row_data[col] = "" # 缺失数据补空
-                            
+                            row_data[col] = ""
                     table_rows.append(row_data)
                 
-                # 转换为 DataFrame 并展示
-                detail_display_df = pd.DataFrame(table_rows)
-                st.dataframe(detail_display_df, use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # 获取主要角色
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
@@ -1005,6 +1000,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
