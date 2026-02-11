@@ -856,7 +856,7 @@ if not df.empty:
 
         st.markdown("---")
         
-        # 深度市场解析
+        # --- 深度市场解析 ---
         sub_df = extract_advanced_features(sub_df)
         st.markdown("### 🎯 深度市场深度解析 (Advanced Market Insight)")
         st.markdown("#### 👥 用户画像分布 (Demographic Analysis)")
@@ -883,13 +883,13 @@ if not df.empty:
         with st.container():
             st.info("**💡 矩阵说明：** 通过切换下方【身份标签】，可以发现不同人群对产品的不满点是否存在错位。")
 
+        # 确定全局前三维度
         global_top_3 = analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
         while len(global_top_3) < 3:
             global_top_3.append("其他")
 
         if not analysis_res.empty:
-            top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
-            
+            # --- 核心绘图与表格函数定义 ---
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                 valid_local = [d for d in local_dims if d and d != "未提及"]
                 final_dims = valid_local + [d for d in global_top_3 if d not in valid_local]
@@ -900,6 +900,7 @@ if not df.empty:
                 
                 for sku in all_skus:
                     sku_df = data_source[data_source['sku_spec'] == sku]
+                    
                     def get_metric(target_df, dimension):
                         if dimension == "其他": return 3.0, 0
                         keywords = []
@@ -916,13 +917,13 @@ if not df.empty:
                     sc_b, _ = get_metric(sku_df, d_b)
                     
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                        # --- 优化点 1: 提取简短名称用于绘图 ---
-                        # 假设格式是 'Brand-Price-ASIN...'，我们只取前两部分
-                        short_name = "-".join(str(sku).split('-')[:2]) 
+                        # 优化：提取 Brand + ASIN 作为短名字展示
+                        parts = str(sku).split('-')
+                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
                         
                         plot_data.append({
-                            'full_sku': str(sku), # 保留完整串用于匹配表格
-                            'short_name': short_name, # 用于图表显示的短名字
+                            'full_sku': str(sku),
+                            'short_name': short_name,
                             'score_x': sc_x if sc_x is not None else 3.0,
                             'score_y': sc_y if sc_y is not None else 3.0,
                             'score_bubble_val': sc_b if sc_b is not None else 3.0 
@@ -933,15 +934,15 @@ if not df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
                     return
 
-                # --- 绘图部分 ---
+                # 1. 绘制气泡图
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
                     x=res_df['score_x'], 
                     y=res_df['score_y'], 
                     mode='markers+text',
-                    text=res_df['short_name'], # 图表只显示短名字
+                    text=res_df['short_name'], 
                     textposition="top center", 
-                    customdata=res_df['full_sku'], # 悬浮窗依然显示全名
+                    customdata=res_df['full_sku'],
                     marker=dict(
                         size=res_df['score_bubble_val'] * 12, 
                         color=res_df['score_x'] + res_df['score_y'], 
@@ -949,44 +950,38 @@ if not df.empty:
                         showscale=True, 
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(大小): %{{score_bubble_val:.2f}}<extra></extra>")
+                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(大小): %{{marker.size}}<extra></extra>")
                 ))
                 fig.update_layout(
-                    title=f"{title_label}：维度表现分布 (气泡越绿/越高表现越好)", 
-                    xaxis=dict(title=f"{d_x} 评分 (1-5)", range=[0.8, 5.2]), 
-                    yaxis=dict(title=f"{d_y} 评分 (1-5)", range=[0.8, 5.2]), 
+                    title=f"{title_label}：维度表现分布", 
+                    xaxis=dict(title=f"{d_x} 评分", range=[0.8, 5.2]), 
+                    yaxis=dict(title=f"{d_y} 评分", range=[0.8, 5.2]), 
                     height=500
                 )
-                st.plotly_chart(fig, use_container_width=True, key=f"bubble_{sub_name}_{suffix}")
+                st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 优化点 2: 下方展示 Excel 详细参数对照表 ---
+                # 2. 绘制参数对照表
                 st.markdown("##### 📋 产品参数详细对照表")
-                
-                # 构造表格数据
                 table_rows = []
-                for sku in res_df['full_sku']:
-                    parts = sku.split('-')
-                    # 按照你给出的 Excel 列名顺序进行填充
-                    # 注意：如果有的 ASIN 属性不够多，这里加个判断防止报错
-                    table_rows.append({
-                        "ASIN": parts[0] if len(parts)>0 else "",
-                        "Brand": parts[1] if len(parts)>1 else "",
-                        "ASP用于": parts[2] if len(parts)>2 else "",
-                        "出墨方式": parts[3] if len(parts)>3 else "",
-                        "线宽": parts[4] if len(parts)>4 else "",
-                        "笔头类型": parts[5] if len(parts)>5 else "",
-                        "支数": parts[6] if len(parts)>6 else "",
-                        "包装材质": parts[7] if len(parts)>7 else "",
-                        "包装方式": parts[8] if len(parts)>8 else ""
-                    })
+                columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
-                detail_df = pd.DataFrame(table_rows)
-                # 使用 Streamlit 的 dataframe 组件，支持滚动和搜索
-                st.dataframe(detail_df, use_container_width=True, hide_index=True)
+                for full_sku in res_df['full_sku']:
+                    parts = full_sku.split('-')
+                    # 确保即使 Excel 数据缺失也不会越界报错
+                    row_data = {col: (parts[i] if i < len(parts) else "") for i, col in enumerate(columns_list)}
+                    table_rows.append(row_data)
+                
+                st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
+            # 获取主要角色
+            top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
+            
+            # 渲染 Tabs
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
+            
             with tab_list[0]:
-                draw_sku_bubble_chart(sub_df, "全量数据", "total", global_top_3)
+                draw_sku_bubble_chart(sub_df, "全量数据", f"total_{sub_name}", global_top_3)
+            
             for i, role in enumerate(top_roles):
                 with tab_list[i+1]:
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
@@ -997,9 +992,10 @@ if not df.empty:
                         count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
-                    draw_sku_bubble_chart(role_sub, role, f"role_{i}", role_specific_dims)
-else:
-    st.info("💡 请确保目录下存在 【常青款.xlsx】 文件。")
+                    draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+        else:
+            st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
