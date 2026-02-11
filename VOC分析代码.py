@@ -876,7 +876,7 @@ if not df.empty:
         else:
             st.warning(f"🔍 暂无明确的 {persona_dim} 维度数据。")
 
-        st.markdown("---")
+st.markdown("---")
         st.markdown("#### 🚀 核心痛点维度评分矩阵 (Dynamic Persona-Pain Matrix)")
         
         with st.container():
@@ -920,12 +920,19 @@ if not df.empty:
                         parts = str(sku).split('_')
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
                         
+                        # 处理分值，补全 3.0 以防计算出错
+                        val_x = sc_x if sc_x is not None else 3.0
+                        val_y = sc_y if sc_y is not None else 3.0
+                        val_b = sc_b if sc_b is not None else 3.0
+                        
+                        # --- 修复 KeyError 的关键点：在此处定义 total_sum ---
                         plot_data.append({
                             'full_sku': str(sku),
                             'short_name': short_name,
-                            'score_x': sc_x if sc_x is not None else 3.0,
-                            'score_y': sc_y if sc_y is not None else 3.0,
-                            'score_bubble_val': sc_b if sc_b is not None else 3.0 # 这是 1-5 的原始分
+                            'score_x': val_x,
+                            'score_y': val_y,
+                            'score_bubble_val': val_b,
+                            'total_sum': val_x + val_y + val_b # 计算三维度总分
                         })
                 
                 res_df = pd.DataFrame(plot_data)
@@ -934,7 +941,7 @@ if not df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小，无气泡可显示")
                     return
 
-# --- 1. 绘制气泡图 (颜色综合三个维度评分总和) ---
+                # --- 1. 绘制气泡图 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
                     x=res_df['score_x'], 
@@ -942,19 +949,17 @@ if not df.empty:
                     mode='markers+text',
                     text=res_df['short_name'], 
                     textposition="top center", 
-                    # 传入原始数据用于悬停显示
                     customdata=res_df[['full_sku', 'score_bubble_val']], 
                     marker=dict(
-                        size=res_df['score_bubble_val'] * 12, # 视觉放大倍数
-                        color=res_df['total_sum'],           # 颜色由三维度总和决定
-                        cmin=3.0,                            # 固定颜色轴最小值
-                        cmax=15.0,                           # 固定颜色轴最大值
-                        colorscale='RdYlGn',                 # 红-黄-绿渐变
+                        size=res_df['score_bubble_val'] * 12, # 视觉放大
+                        color=res_df['total_sum'],           # 使用刚刚定义的列
+                        cmin=3.0,                            # 最小总分
+                        cmax=15.0,                           # 最大总分
+                        colorscale='RdYlGn', 
                         showscale=True, 
                         colorbar=dict(title="综合实力(总分)"),
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    # 修正悬停模板，显示原始 1-5 评分
                     hovertemplate = (
                         f"<b>%{{customdata[0]}}</b><br>"
                         f"{d_x}: %{{x:.2f}}<br>"
@@ -977,18 +982,15 @@ if not df.empty:
                 table_rows = []
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
-                # 遍历绘图专用的 res_df，确保表格与气泡一一对应
                 for _, row in res_df.iterrows():
                     full_sku = row['full_sku']
-                    # 使用下划线严格拆分字符串
                     parts = str(full_sku).split('_')
                     row_data = {col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)}
                     table_rows.append(row_data)
                 
-                # 隐藏索引渲染表格
                 st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
-            # --- 渲染逻辑 ---
+            # --- 渲染逻辑 (此处代码保持不变) ---
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             
@@ -1008,6 +1010,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
