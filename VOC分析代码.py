@@ -917,10 +917,9 @@ if not df.empty:
                     sc_y, _ = get_metric(sku_df, d_y)
                     sc_b, _ = get_metric(sku_df, d_b)
                     
+                    # --- 核心过滤逻辑：只有在该人群下有维度表现的产品才进入 plot_data ---
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                        # 使用下划线拆分，保护括号内的价格横杠
                         parts = str(sku).split('_')
-                        # 气泡图短名：品牌-ASIN
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
                         
                         plot_data.append({
@@ -931,9 +930,11 @@ if not df.empty:
                             'score_bubble_val': sc_b if sc_b is not None else 3.0 
                         })
                 
+                # 创建绘图用的 DataFrame
                 res_df = pd.DataFrame(plot_data)
+                
                 if res_df.empty:
-                    st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
+                    st.warning(f"⚠️ {title_label} 匹配维度下数据量过小，无气泡可显示")
                     return
 
                 # --- 1. 绘制气泡图 ---
@@ -962,13 +963,13 @@ if not df.empty:
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 2. 绘制参数对照表 (在函数内，随人群数据 data_source 变化) ---
-                st.markdown(f"##### 📋 {title_label} - 产品参数详细对照表")
+                # --- 2. 绘制参数对照表 (严格对齐气泡图中的产品) ---
+                st.markdown(f"##### 📋 {title_label} - 图中产品参数明细")
                 table_rows = []
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
+                # 注意：此处遍历的是 res_df，确保表格里的每一行在图里都有对应的气泡
                 for full_sku in res_df['full_sku']:
-                    # 严格使用下划线拆分
                     parts = str(full_sku).split('_')
                     row_data = {}
                     for i, col in enumerate(columns_list):
@@ -978,7 +979,7 @@ if not df.empty:
                             row_data[col] = ""
                     table_rows.append(row_data)
                 
-                # 仅展示当前 res_df (即当前人群) 中的 SKU
+                # 渲染表格
                 st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # --- 渲染逻辑 ---
@@ -1002,10 +1003,12 @@ if not df.empty:
                         count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
-                    # 调用函数，传入 role_sub 实现表格同步更新
+                    
+                    # 调用函数：传入特定人群的数据子集，同步生成气泡图和明细表
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
