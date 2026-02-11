@@ -895,13 +895,11 @@ if not df.empty:
                 d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
                 
                 plot_data = []
-                # 这里的 data_source 是根据当前人群 Tab 传入的过滤后数据
                 all_skus = data_source['sku_spec'].unique()
                 
                 for sku in all_skus:
                     sku_df = data_source[data_source['sku_spec'] == sku]
                     
-                    # 内部辅助函数获取评分指标
                     def get_metric(target_df, dimension):
                         if dimension == "其他": return 3.0, 0
                         keywords = []
@@ -917,7 +915,7 @@ if not df.empty:
                     sc_y, _ = get_metric(sku_df, d_y)
                     sc_b, _ = get_metric(sku_df, d_b)
                     
-                    # --- 核心过滤逻辑：只有在该人群下有维度表现的产品才进入 plot_data ---
+                    # 核心过滤：只有在该人群下有维度表现的产品才进入绘图数据集
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
                         parts = str(sku).split('_')
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
@@ -927,10 +925,9 @@ if not df.empty:
                             'short_name': short_name,
                             'score_x': sc_x if sc_x is not None else 3.0,
                             'score_y': sc_y if sc_y is not None else 3.0,
-                            'score_bubble_val': sc_b if sc_b is not None else 3.0 
+                            'score_bubble_val': sc_b if sc_b is not None else 3.0 # 这是 1-5 的原始分
                         })
                 
-                # 创建绘图用的 DataFrame
                 res_df = pd.DataFrame(plot_data)
                 
                 if res_df.empty:
@@ -945,15 +942,23 @@ if not df.empty:
                     mode='markers+text',
                     text=res_df['short_name'], 
                     textposition="top center", 
-                    customdata=res_df['full_sku'],
+                    # 重点：通过 customdata 将原始的 score_bubble_val 传给图表
+                    customdata=res_df[['full_sku', 'score_bubble_val']], 
                     marker=dict(
-                        size=res_df['score_bubble_val'] * 12, 
+                        size=res_df['score_bubble_val'] * 12, # 这里乘以12仅用于视觉显示
                         color=res_df['score_x'] + res_df['score_y'], 
                         colorscale='RdYlGn', 
                         showscale=True, 
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}: %{{marker.size}}<extra></extra>")
+                    # 修正悬停：%{customdata[1]} 获取的是原始 1-5 分值，而非几十的像素值
+                    hovertemplate = (
+                        f"<b>%{{customdata[0]}}</b><br>"
+                        f"{d_x}: %{{x:.2f}}<br>"
+                        f"{d_y}: %{{y:.2f}}<br>"
+                        f"{d_b}: %{{customdata[1]:.2f}}"
+                        f"<extra></extra>"
+                    )
                 ))
                 fig.update_layout(
                     title=f"{title_label}：维度表现分布", 
@@ -963,30 +968,22 @@ if not df.empty:
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 2. 绘制参数对照表 (严格对齐气泡图中的产品) ---
+                # --- 2. 绘制参数对照表 (一定一定要对齐：仅显示图中出现的产品) ---
                 st.markdown(f"##### 📋 {title_label} - 图中产品参数明细")
                 table_rows = []
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
-                # 注意：此处遍历的是 res_df，确保表格里的每一行在图里都有对应的气泡
-                for full_sku in res_df['full_sku']:
+                # 遍历 res_df 确保同步
+                for _, row in res_df.iterrows():
+                    full_sku = row['full_sku']
                     parts = str(full_sku).split('_')
-                    row_data = {}
-                    for i, col in enumerate(columns_list):
-                        if i < len(parts):
-                            row_data[col] = parts[i].strip()
-                        else:
-                            row_data[col] = ""
+                    row_data = {col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)}
                     table_rows.append(row_data)
                 
-                # 渲染表格
                 st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # --- 渲染逻辑 ---
-            # 获取主要角色
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
-            
-            # 渲染 Tabs
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             
             with tab_list[0]:
@@ -994,7 +991,6 @@ if not df.empty:
             
             for i, role in enumerate(top_roles):
                 with tab_list[i+1]:
-                    # 核心筛选：仅提取当前身份标签的数据
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
                     role_neg_text = " ".join(role_sub[role_sub['s_pol'] < 0]['s_text'].astype(str).tolist())
                     dim_counts = {}
@@ -1003,8 +999,6 @@ if not df.empty:
                         count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
-                    
-                    # 调用函数：传入特定人群的数据子集，同步生成气泡图和明细表
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
