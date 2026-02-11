@@ -898,7 +898,6 @@ if not df.empty:
                         dim_rules = FEATURE_DIC.get(dimension, {})
                         if not dim_rules: return None, 0, ""
 
-                        # 汇总所有关键词用于粗筛
                         all_keywords = []
                         for k_list in dim_rules.values():
                             all_keywords.extend(k_list)
@@ -908,34 +907,39 @@ if not df.empty:
                         
                         if matched.empty: return None, 0, "未提及"
                         
-                        # --- 细分标签统计逻辑 ---
-                        # 只针对评分 <= 3 的评论进行痛点细分统计
-                        neg_matched = matched[matched['Rating'] <= 3]
+                        # --- 核心逻辑修改：结构化统计 + 原文保留 ---
+                        neg_matched = matched[matched['Rating'] <= 3].sort_values("Rating")
                         
                         if not neg_matched.empty:
+                            # 1. 统计 FEATURE_DIC 中的细分痛点
                             tag_stats = {}
-                            # 遍历 FEATURE_DIC 里的细分项 (例如: '负面-笔头磨损分叉')
                             for tag, keywords in dim_rules.items():
                                 if '负面' in tag:
-                                    tag_name = tag.split('-')[-1] # 提取 "笔头磨损分叉"
+                                    tag_name = tag.split('-')[-1]
                                     tag_pat = '|'.join([re.escape(k) for k in keywords])
-                                    # 统计该细分标签在差评中出现的次数
                                     count = neg_matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE).sum()
                                     if count > 0:
                                         tag_stats[tag_name] = count
                             
-                            # 按次数排序并格式化输出
+                            # 2. 格式化痛点头部
                             if tag_stats:
                                 sorted_tags = sorted(tag_stats.items(), key=lambda x: x[1], reverse=True)
-                                reason = " | ".join([f"{t}({c}次)" for t, c in sorted_tags])
+                                header = "【核心痛点统计】：\n" + " | ".join([f"{t}({c}次)" for t, c in sorted_tags])
                             else:
-                                reason = "存在低分评价但未匹配到具体痛点标签"
+                                header = "【核心痛点】：存在低分评价但未匹配到具体标签"
+
+                            # 3. 抓取所有唯一的差评原文
+                            all_neg_texts = neg_matched['s_text'].unique().tolist()
+                            raw_feedback = "\n\n---\n\n【详细评价原文】：\n" + "\n\n".join(all_neg_texts)
+                            
+                            # 最终合并：统计在前，原文在后
+                            reason = header + raw_feedback
                         else:
                             reason = "评价较正面"
                         
                         return matched['Rating'].mean(), len(matched), reason
                     
-                    # 获取指标数据
+                    # 获取指标数据 (后续逻辑保持不变)
                     sc_x, cnt_x, re_x = get_metric_with_reason(sku_df, d_x)
                     sc_y, cnt_y, re_y = get_metric_with_reason(sku_df, d_y)
                     sc_b, cnt_b, re_b = get_metric_with_reason(sku_df, d_b)
@@ -943,7 +947,6 @@ if not df.empty:
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
                         parts = str(sku).split('_')
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
-                        
                         v_x, v_y, v_b = (sc_x or 3.0), (sc_y or 3.0), (sc_b or 3.0)
                         
                         plot_data.append({
@@ -954,7 +957,6 @@ if not df.empty:
                             'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
                             'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
                         })
-                
                 res_df = pd.DataFrame(plot_data)
                 if res_df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
@@ -1043,6 +1045,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
