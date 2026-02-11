@@ -916,8 +916,13 @@ if not df.empty:
                     sc_b, _ = get_metric(sku_df, d_b)
                     
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
+                        # --- 优化点 1: 提取简短名称用于绘图 ---
+                        # 假设格式是 'Brand-Price-ASIN...'，我们只取前两部分
+                        short_name = "-".join(str(sku).split('-')[:2]) 
+                        
                         plot_data.append({
-                            'sku': str(sku),
+                            'full_sku': str(sku), # 保留完整串用于匹配表格
+                            'short_name': short_name, # 用于图表显示的短名字
                             'score_x': sc_x if sc_x is not None else 3.0,
                             'score_y': sc_y if sc_y is not None else 3.0,
                             'score_bubble_val': sc_b if sc_b is not None else 3.0 
@@ -928,15 +933,56 @@ if not df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
                     return
 
+                # --- 绘图部分 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
-                    text=res_df['sku'], textposition="top center", customdata=res_df['score_bubble_val'], 
-                    marker=dict(size=res_df['score_bubble_val'] * 12, color=res_df['score_x'] + res_df['score_y'], colorscale='RdYlGn', showscale=True, line=dict(width=1, color='DarkSlateGrey')),
-                    hovertemplate = (f"<b>%{{text}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(气泡): %{{customdata:.2f}}<extra></extra>")
+                    x=res_df['score_x'], 
+                    y=res_df['score_y'], 
+                    mode='markers+text',
+                    text=res_df['short_name'], # 图表只显示短名字
+                    textposition="top center", 
+                    customdata=res_df['full_sku'], # 悬浮窗依然显示全名
+                    marker=dict(
+                        size=res_df['score_bubble_val'] * 12, 
+                        color=res_df['score_x'] + res_df['score_y'], 
+                        colorscale='RdYlGn', 
+                        showscale=True, 
+                        line=dict(width=1, color='DarkSlateGrey')
+                    ),
+                    hovertemplate = (f"<b>%{{customdata}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>{d_b}(大小): %{{score_bubble_val:.2f}}<extra></extra>")
                 ))
-                fig.update_layout(title=f"{title_label}：维度表现分布", xaxis=dict(title=f"{d_x} 评分 (1-5)", range=[0.8, 5.2]), yaxis=dict(title=f"{d_y} 评分 (1-5)", range=[0.8, 5.2]), height=500)
+                fig.update_layout(
+                    title=f"{title_label}：维度表现分布 (气泡越绿/越高表现越好)", 
+                    xaxis=dict(title=f"{d_x} 评分 (1-5)", range=[0.8, 5.2]), 
+                    yaxis=dict(title=f"{d_y} 评分 (1-5)", range=[0.8, 5.2]), 
+                    height=500
+                )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{sub_name}_{suffix}")
+
+                # --- 优化点 2: 下方展示 Excel 详细参数对照表 ---
+                st.markdown("##### 📋 产品参数详细对照表")
+                
+                # 构造表格数据
+                table_rows = []
+                for sku in res_df['full_sku']:
+                    parts = sku.split('-')
+                    # 按照你给出的 Excel 列名顺序进行填充
+                    # 注意：如果有的 ASIN 属性不够多，这里加个判断防止报错
+                    table_rows.append({
+                        "ASIN": parts[0] if len(parts)>0 else "",
+                        "Brand": parts[1] if len(parts)>1 else "",
+                        "ASP用于": parts[2] if len(parts)>2 else "",
+                        "出墨方式": parts[3] if len(parts)>3 else "",
+                        "线宽": parts[4] if len(parts)>4 else "",
+                        "笔头类型": parts[5] if len(parts)>5 else "",
+                        "支数": parts[6] if len(parts)>6 else "",
+                        "包装材质": parts[7] if len(parts)>7 else "",
+                        "包装方式": parts[8] if len(parts)>8 else ""
+                    })
+                
+                detail_df = pd.DataFrame(table_rows)
+                # 使用 Streamlit 的 dataframe 组件，支持滚动和搜索
+                st.dataframe(detail_df, use_container_width=True, hide_index=True)
 
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             with tab_list[0]:
@@ -954,5 +1000,6 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}", role_specific_dims)
 else:
     st.info("💡 请确保目录下存在 【常青款.xlsx】 文件。")
+
 
 
