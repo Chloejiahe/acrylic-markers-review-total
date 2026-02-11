@@ -904,14 +904,19 @@ if not df.empty:
                         
                         if matched.empty: return None, 0, "未提及"
                         
-                        neg_comments = matched[matched['Rating'] <= 3]
-                        reason = "评价较正面"
+                        # --- 修改逻辑：抓取该维度下所有评分<=3的差评原文 ---
+                        neg_comments = matched[matched['Rating'] <= 3].sort_values("Rating")
+                        
                         if not neg_comments.empty:
-                            reason = neg_comments.sort_values("Rating").iloc[0]['s_text']
-                            reason = (reason[:97] + "...") if len(reason) > 100 else reason
+                            # 提取所有唯一的差评内容，不进行 100 字符截断
+                            all_neg_texts = neg_comments['s_text'].unique().tolist()
+                            reason = "\n\n---\n\n".join(all_neg_texts) 
+                        else:
+                            reason = "评价较正面"
                         
                         return matched['Rating'].mean(), len(matched), reason
                     
+                    # 获取指标数据
                     sc_x, cnt_x, re_x = get_metric_with_reason(sku_df, d_x)
                     sc_y, cnt_y, re_y = get_metric_with_reason(sku_df, d_y)
                     sc_b, cnt_b, re_b = get_metric_with_reason(sku_df, d_b)
@@ -963,7 +968,6 @@ if not df.empty:
                 target_row = res_df[res_df['short_name'] == selected_asin].iloc[0]
 
                 cols = st.columns(3)
-                # 映射：维度名, 分数列, 原因列, 计数列
                 dims_map = [
                     (d_x, 'score_x', 'reason_x', 'cnt_x'),
                     (d_y, 'score_y', 'reason_y', 'cnt_y'),
@@ -975,9 +979,9 @@ if not df.empty:
                         score_val = target_row[s_col]
                         color = "#d9534f" if score_val < 3.5 else "#f0ad4e" if score_val < 4.2 else "#5cb85c"
                         
-                        # 渲染带颜色的卡片头部
+                        # 渲染带颜色的卡片头部：取消了 height: 110px 的限制，改为 min-height
                         st.markdown(f"""
-                        <div style="border-left: 5px solid {color}; padding: 10px; background-color: #f9f9f9; border-radius: 5px; height: 110px; margin-bottom: 5px;">
+                        <div style="border-left: 5px solid {color}; padding: 10px; background-color: #f9f9f9; border-radius: 5px; min-height: 110px; margin-bottom: 5px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-weight: bold; font-size: 15px; color: #333;">{name}</span>
                                 <span style="color: {color}; font-weight: bold; font-size: 16px;">{score_val:.2f} ⭐</span>
@@ -987,9 +991,9 @@ if not df.empty:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # 折叠查看具体文字
+                        # 折叠查看完整评价（不进行任何截断）
                         with st.expander("🔍 展开查看原文"):
-                            st.info(f"“{target_row[r_col]}”")
+                            st.info(target_row[r_col])
 
                 # --- 3. 参数明细 ---
                 with st.expander("📋 查看产品参数明细"):
@@ -1000,7 +1004,7 @@ if not df.empty:
                         table_rows.append({col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)})
                     st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
-            # --- 渲染逻辑 (此处代码保持不变) ---
+            # --- 渲染逻辑 ---
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             
@@ -1020,6 +1024,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
