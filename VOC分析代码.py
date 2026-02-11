@@ -31,13 +31,13 @@ FEATURE_DIC = {
             '正面-套装/数量选择满意': ['love the large set', 'great number of colors', 'perfect amount of colors', 'huge set of 72', 'full set is amazing', 'good assortment', 'bought all sizes'],
             '负面-套装/数量选择不满意': ['wish for a smaller set', 'too many colors', 'no smaller option', 'forced to buy the large set', 'have to buy the whole set'],
             '正面-色系规划满意': ['great color selection', 'perfect pastel set', 'good range of skin tones', 'well-curated palette', 'love the color story', 'beautiful assortment of colors', 'has every color I need'],
-            '负面-色系规划不满': ['missing key colors', 'no true red', 'needs more grays', 'too many similar colors', 'palette is not useful', 'wish it had more pastels', 'poor color selection', 'needs more skin tones', 'pink needs to be more flamingo-ish'],
-            '负面-色系失衡': ['too many similar colors', 'missing greens', 'needs more warm tones', 'repeated shades', 'doubles of colors', 'lack of blue range', 'color was just like the orange'],
+            '负面-色系规划不满': ['duplicate colors', 'missing key colors', 'no true red', 'needs more grays', 'too many similar colors', 'palette is not useful', 'wish it had more pastels', 'poor color selection', 'needs more skin tones', 'pink needs to be more flamingo-ish', 'missing greens', 'needs more warm tones', 'repeated shades', 'lack of blue range', 'color was just like the orange'],
             '中性-提及色彩丰富度': ['color range', 'color variety', 'color selection', 'number of colors', 'range of shades', 'selection of hues', 'color assortment', 'color palette', 'spectrum of colors', 'array of colors', 'how many colors', 'color choice'],
        },
         '色彩一致性': {
             '正面-颜色准确': ['as shown in the photo', 'true to color', 'match the cap', 'accurate color', 'color accuracy', 'exact color', 'matches perfectly', 'consistent color', 'consistency', 'match the cap color', 'colors as expected'],
             '负面-颜色偏差': ['color doesn\'t match', 'shade doesn\'t match', 'misleading cap color', 'wrong cap color', 'color is off', 'darker than cap', 'lighter than cap', 'wrong color', 'color different', 'shade is different', 'red looks pink', 'green is lighter', 'orange looks like peach', 'gold has a greenish tone', 'darker than expected', 'colors are not the same', 'not the exact same'],
+            '负面-两头颜色不一': ['colors are different from one end to next', 'one end shows up darker', 'brush end was a totally different color', 'ends don\'t match', 'colors actually clash with each other between tips'],
             '正面-设计-颜色准确 (VS 笔帽)': ['true to cap', 'true to color', 'match the cap', 'matches the cap perfectly', 'cap is a perfect match', 'cap is accurate', 'actually match the cap color'],
             '负面-设计-颜色误导 (VS 笔帽)': ['cap is a hint', 'cap is misleading', 'not even close to the cap', 'cap color is off', 'different from the lid', 'misleading cap', 'cap is wrong', 'cap is a lie', "color doesn't match the barrel", 'the cap color is way off', 'nothing like the cap', 'compared the caps and many of the colors are not the same'],
             '正面-营销-颜色准确(VS 网图)': ['matches the description', 'exactly as advertised', 'what you see is what you get', 'matches the online photo', 'true to the swatch', 'photo is accurate'],
@@ -50,7 +50,7 @@ FEATURE_DIC = {
         '色彩饱和度与混合': {
             '正面-鲜艳/饱和': ['bright colors', 'nice and bright', 'beautifully bright', 'richly saturated', 'perfectly saturated', 'deeply saturated', 'nice saturation', 'vibrant colors', 'rich colors', 'colors pop', 'brilliance of the colors', 'vivid color', 'very vivid', 'vividness', 'saturated color', 'bold colors', 'crisp and bright', 'vibrant and sharp', 'vibrant and wonderful color'],
             '负面-太鲜艳/刺眼': ['garish colors', 'colors are too loud', 'too neon', 'too bright', 'too fluorescent', 'overly bright'],
-            '负面-暗淡/褪色': ['dull', 'faded', 'pale', 'washed out', 'not bright', 'too pale', 'lackluster', 'colors are too dull', 'muddy colors', 'colors look dirty', 'desaturated', 'doesn\'t show up well', 'white is barely white', 'faint on the rock', 'will fade in the sun'],
+            '负面-暗淡/褪色': ['lackluster', 'muddy and washed-out', 'bit of dullness', 'faded a lil bit','dull', 'faded', 'pale', 'washed out', 'not bright', 'too pale', 'lackluster', 'colors are too dull', 'muddy colors', 'colors look dirty', 'desaturated', 'doesn\'t show up well', 'white is barely white', 'faint on the rock', 'will fade in the sun'],
             '正面-遮盖力强/不透明': ['great coverage', 'completely opaque', 'one coat covers all', 'thick paint feel', 'works on rocks', 'shows up on black', 'vibrant on dark surfaces', 'solid color', 'creamy texture', 'how opaque they are is awesome', 'solid shapes', 'cover in one coat', 'opaque and rich white', 'covers well when applied over other colors', 'pigmentation of the colors'],
             '负面-遮盖力差/透明': ['too transparent', 'very sheer', 'watery', 'streaky', 'takes many coats', 'see through', 'thin ink', 'runny', 'faint colors', 'watered down', 'req either 2 03 coats', 'requires a few coats', 'paint to be extremely thin', 'barely visible', 'could never solidly cover'],
             '正面-叠色/混合顺滑': ['layers well', 'easy to layer', 'good layering', 'smooth layering', 'layers perfectly', 'buildable color', 'smooth finish', 'not streaky', 'even layers', 'consistent texture', 'creamy application', 'doesn\'t disturb bottom layer', 'sits on top nicely', 'doesn\'t lift previous paint', 'no bleeding between layers', 'wet colors can be mixed', 'add water to the paper and blend', 'draw on top of the dried paint'],
@@ -74,6 +74,7 @@ FEATURE_DIC = {
                          'love the winter palette', 'gorgeous wintery shades','perfect for christmas', 'great holiday color scheme', 'love the halloween set'],
             '正面-喜欢霓虹/荧光/夜光': ['love the neon colors', 'super bright neon', 'the neon really pops', 'vibrant neon shades', 'glows under blacklight', 'perfect for blacklight art', 'glow pretty bright under blacklight', 'colors glow in the dark', 'UV art'],
             '正面-喜欢金属/珠光/亮片系': ['love the metallic colors', 'great metallic effect', 'beautiful metallic sheen', 'shiny metal finish', 'gorgeous chrome finish', 'looks like real metal', 'love the pearlescent finish', 'beautiful shimmer', 'amazing liquid chrome effect', 'very reflective', 'stunning iridescent colors', 'love the lustre', 'metallic/ glittery', 'too sparkly', 'glitter lover', 'amazing after sealing with clear glaze'],
+            '负面-效果不符(无闪粉)': ['zero glitter whatsoever', 'no sparkle at all', 'not super metallic or shiney', 'just metallic', 'lots of silver in the brush end'],
             '负面-色系搭配/质量评价': ["palette is ugly", "colors don't go well together", 'weird color combination', 'unusable colors in set', 'poorly curated', 'terrible color choices', 'bad color selection', 'the colors clash', 'no color harmony', 'not a cohesive palette', 'colors are jarring', 'dark and light colors'],
             '中性-提及标准/基础色系': ['standard colors', 'basic set', 'primary colors', 'secondary colors', 'classic colors',
                           'essential colors', 'core colors', 'fundamental palette', 'starter set of colors','introductory palette', 'traditional colors',
@@ -360,7 +361,7 @@ FEATURE_DIC = {
                        'lovely box', 'makes a great gift', 'nicely laid out'],
             '负面-运输/损坏': ['damaged on arrival', 'missing marker', 'pen was missing', 'not all included', 'empty slot', 'marker missing', 'one less than expected', 'incomplete set',
                       'arrived broken', 'arrived broken', 'pens arrived broken', 'some were broken', 'cracked on arrival', 'damaged during shipping','damaged in transit', 'arrived damaged', 'item was damaged','leaking ink', 'leaked all over', 'ink leaked everywhere', 'arrived leaking','box was crushed',
-                      'package was damaged', 'box was open', 'dented tin', 'poorly packaged for shipping', 'not well protected', 'arrived in bad shape'],
+                      'package was damaged', 'box was open', 'dented tin', 'poorly packaged for shipping', 'not well protected', 'arrived in bad shape','didn’t receive all the colors', 'picture shows 15 and I received 8', 'only 8 markers', 'missing markers in set'],
             '正面-客服/售后': ['great customer service', 'excellent customer service', 'amazing support', 'seller was helpful', 'seller was very helpful', 'very responsive seller', 'quick response', 'fast reply',
                       'answered my questions quickly', 'resolved my issue quickly', 'problem solved','fast replacement', 'quick replacement', 'sent a replacement right away', 'easy replacement process',
                        'easy refund', 'hassle-free refund', 'full refund was issued','went above and beyond', 'proactive customer service'],
@@ -999,6 +1000,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
