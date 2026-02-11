@@ -314,9 +314,9 @@ FEATURE_DIC = {
                                       'hope they release more colors', 'can\'t wait for new colors','limited edition colors', 'love the special editions', 'collector\'s edition'],
             '负面-可拓展性差 (Poor expandability)': ['wish they had more muted colors', 'looking for a full range but not getting it', 'no new colors', 'collection is limited', 'wish they had more shades', 'no new sets released','stagnant collection', 'line seems to be discontinued', 'never release new colors',
                                    'can\'t expand my collection', 'no updates to the color range', 'stuck with the same colors', 'wish they would expand the range', 'color range is too small', 'no new releases'],
-            '正面-可补充性 (Can be replenished)': [ 'tips are reversible','refillable', 'refillable ink', 'ink refills available', 'can buy refills', 'replaceable cartridges','buy individually', 'can buy single pens', 'sold individually', 'available as singles', 'open stock',
+            '正面-可补充性 (Can be replenished)': [ "can be refilled", "refillable", "reusable", "refill", "refills", "refill paint", "easy to refill", "refilled",'paint refill', 'refillable with','recyclable','tips are reversible','refillable', 'refillable ink', 'ink refills available', 'can buy refills', 'replaceable cartridges','buy individually', 'can buy single pens', 'sold individually', 'available as singles', 'open stock',
                                  'don\'t have to buy the whole set', 'can just replace the one I need','replaceable nibs', 'can replace the nibs', 'replacement nibs available'],
-            '负面-可补充性差 (Poor replenishability)': ['not refillable', 'replacement tips cost almost as much as a new marker', 'difficult to find replacement tips', 'dried out and not refillable',"can't buy single", 'not sold individually', 'not available individually', 'can\'t buy individual pens', 'not sold as singles','wish they sold refills', 'no refills available', 'can\'t find refills', 'ink is not refillable', 'no refill cartridges', 'no replacement nibs', 'can\'t replace the tip', 'no replacement parts',
+            '负面-可补充性差 (Poor replenishability)': ["tips are not replaceable", "tips are not refillable", "markers are not refillable", "cannot be refilled", "not refillable", "disposable", "one time use pen", "dried out and not refillable", "sealed and not refillable", "not replaceable",'not refillable', 'replacement tips cost almost as much as a new marker', 'difficult to find replacement tips', 'dried out and not refillable',"can't buy single", 'not sold individually', 'not available individually', 'can\'t buy individual pens', 'not sold as singles','wish they sold refills', 'no refills available', 'can\'t find refills', 'ink is not refillable', 'no refill cartridges', 'no replacement nibs', 'can\'t replace the tip', 'no replacement parts',
                                    'have to buy a whole new set', 'forced to rebuy the set', 'must buy the entire set again'],
             '正面-单支购买': ['available as singles','can buy single white pens', 'available as individual markers', 'don\'t need to buy a whole pack for one color', 'sold as singles for replacement'],
             '负面-不可单支购买': [ 'wish I could buy these markers easily individually', 'can\'t buy individual colors', 'forced to buy a set for one color','wasteful to buy a new set', 'no single replacements', 'can\'t find individual pens for sale', 'forced to buy 12 just for the black one'],
@@ -1001,6 +1001,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
