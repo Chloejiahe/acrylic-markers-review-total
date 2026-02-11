@@ -895,6 +895,7 @@ if not df.empty:
                 d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
                 
                 plot_data = []
+                # 这里的 data_source 是根据当前人群 Tab 传入的过滤后数据
                 all_skus = data_source['sku_spec'].unique()
                 
                 for sku in all_skus:
@@ -917,7 +918,7 @@ if not df.empty:
                     sc_b, _ = get_metric(sku_df, d_b)
                     
                     if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                        # 适配 USER_CATEGORY_MAPPING 的下划线格式
+                        # 使用下划线拆分，保护括号内的价格横杠
                         parts = str(sku).split('_')
                         # 气泡图短名：品牌-ASIN
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
@@ -961,12 +962,13 @@ if not df.empty:
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 2. 绘制参数对照表 ---
-                st.markdown("##### 📋 产品参数详细对照表")
+                # --- 2. 绘制参数对照表 (在函数内，随人群数据 data_source 变化) ---
+                st.markdown(f"##### 📋 {title_label} - 产品参数详细对照表")
                 table_rows = []
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
                 for full_sku in res_df['full_sku']:
+                    # 严格使用下划线拆分
                     parts = str(full_sku).split('_')
                     row_data = {}
                     for i, col in enumerate(columns_list):
@@ -976,8 +978,10 @@ if not df.empty:
                             row_data[col] = ""
                     table_rows.append(row_data)
                 
+                # 仅展示当前 res_df (即当前人群) 中的 SKU
                 st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
+            # --- 渲染逻辑 ---
             # 获取主要角色
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             
@@ -989,6 +993,7 @@ if not df.empty:
             
             for i, role in enumerate(top_roles):
                 with tab_list[i+1]:
+                    # 核心筛选：仅提取当前身份标签的数据
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
                     role_neg_text = " ".join(role_sub[role_sub['s_pol'] < 0]['s_text'].astype(str).tolist())
                     dim_counts = {}
@@ -997,9 +1002,11 @@ if not df.empty:
                         count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
+                    # 调用函数，传入 role_sub 实现表格同步更新
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
