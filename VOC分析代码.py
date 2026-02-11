@@ -353,8 +353,8 @@ FEATURE_DIC = {
 
             },
         '配套与服务(色卡)': {
-            '正面-提供色卡/好用': ['comes with a swatch card', 'includes a swatch card', 'love the swatch card', 'helpful swatch card', 'great for swatching', 'easy to swatch', 'blank swatch card', 'pre-printed swatch card'],
-            '负面-缺少色卡/不好用': ['no swatch card', "wish it had a swatch card", "doesn't come with a swatch card", 'had to make my own swatch card', 'swatch card is inaccurate', 'swatch card is useless', "colors on swatch card don't match"],
+            '正面-提供色卡/好用': ["love the swatch card", "includes a color card", "comes with a card to help identify each color", "comes with a color card to fill in", "handy card to see what the colors look like", "came with a color card to fill in", "comes with a card to swatch colors", "easy to make a color card",'comes with a swatch card', 'includes a swatch card', 'love the swatch card', 'helpful swatch card', 'great for swatching', 'easy to swatch', 'blank swatch card', 'pre-printed swatch card'],
+            '负面-缺少色卡/不好用': ["wish it had a color code/name on each marker", "not easy to make a color card", "no color code/name on each marker", "color card is not accurate", "color card wasn't especially true to color", "markers are unlabeled", "colors not numbered",'no swatch card', "wish it had a swatch card", "doesn't come with a swatch card", 'had to make my own swatch card', 'swatch card is inaccurate', 'swatch card is useless', "colors on swatch card don't match"],
             '中性-提及色卡': ['swatch card',  'color chart'],
             },
         '购买与服务体验': {
@@ -1001,6 +1001,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
