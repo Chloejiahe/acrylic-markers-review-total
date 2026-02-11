@@ -878,7 +878,7 @@ if not df.empty:
         while len(global_top_3) < 3:
             global_top_3.append("其他")
 
-if not analysis_res.empty:
+        if not analysis_res.empty:
             # --- 核心绘图与表格函数定义 ---
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                 valid_local = [d for d in local_dims if d and d != "未提及"]
@@ -1020,6 +1020,7 @@ if not analysis_res.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
