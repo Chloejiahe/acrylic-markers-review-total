@@ -876,7 +876,7 @@ if not df.empty:
         else:
             st.warning(f"🔍 暂无明确的 {persona_dim} 维度数据。")
 
-st.markdown("---")
+        st.markdown("---")
         st.markdown("#### 🚀 核心痛点维度评分矩阵 (Dynamic Persona-Pain Matrix)")
         
         with st.container():
@@ -1010,6 +1010,7 @@ st.markdown("---")
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
