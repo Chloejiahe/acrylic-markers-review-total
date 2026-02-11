@@ -878,7 +878,7 @@ if not df.empty:
         while len(global_top_3) < 3:
             global_top_3.append("其他")
 
-        if not analysis_res.empty:
+if not analysis_res.empty:
             # --- 核心绘图与表格函数定义 ---
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                 valid_local = [d for d in local_dims if d and d != "未提及"]
@@ -904,11 +904,11 @@ if not df.empty:
                         
                         if matched.empty: return None, 0, "未提及"
                         
-                        # 提取低分评论作为投诉根因
                         neg_comments = matched[matched['Rating'] <= 3]
                         reason = "评价较正面"
                         if not neg_comments.empty:
                             reason = neg_comments.sort_values("Rating").iloc[0]['s_text']
+                            reason = (reason[:97] + "...") if len(reason) > 100 else reason
                         
                         return matched['Rating'].mean(), len(matched), reason
                     
@@ -920,17 +920,15 @@ if not df.empty:
                         parts = str(sku).split('_')
                         short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
                         
-                        val_x, val_y, val_b = (sc_x or 3.0), (sc_y or 3.0), (sc_b or 3.0)
+                        v_x, v_y, v_b = (sc_x or 3.0), (sc_y or 3.0), (sc_b or 3.0)
                         
                         plot_data.append({
                             'full_sku': str(sku),
                             'short_name': short_name,
-                            'score_x': val_x,
-                            'score_y': val_y,
-                            'score_bubble_val': val_b,
-                            'total_sum': val_x + val_y + val_b,
-                            f'{d_x}_reason': re_x, f'{d_y}_reason': re_y, f'{d_b}_reason': re_b,
-                            f'{d_x}_cnt': cnt_x, f'{d_y}_cnt': cnt_y, f'{d_b}_cnt': cnt_b
+                            'score_x': v_x, 'score_y': v_y, 'score_b_val': v_b,
+                            'total_sum': v_x + v_y + v_b,
+                            'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
+                            'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
                         })
                 
                 res_df = pd.DataFrame(plot_data)
@@ -941,69 +939,60 @@ if not df.empty:
                 # --- 1. 绘制气泡图 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'], 
-                    y=res_df['score_y'], 
-                    mode='markers+text',
-                    text=res_df['short_name'], 
-                    textposition="top center", 
-                    customdata=res_df[['full_sku', 'score_bubble_val', 'total_sum']], 
+                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
+                    text=res_df['short_name'], textposition="top center",
+                    customdata=res_df[['full_sku', 'score_b_val', 'total_sum']],
                     marker=dict(
-                        size=res_df['score_bubble_val'] * 12, 
-                        color=res_df['total_sum'],           
-                        cmin=3.0, cmax=15.0,
-                        colorscale='RdYlGn', showscale=True, 
-                        colorbar=dict(title="综合实力(总分)"),
+                        size=res_df['score_b_val'] * 12, 
+                        color=res_df['total_sum'], 
+                        colorscale='RdYlGn', showscale=True,
+                        colorbar=dict(title="综合总分"),
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
                     hovertemplate = (
-                        f"<b>%{{customdata[0]}}</b><br>"
-                        f"----------------<br>"
-                        f"{d_x}: %{{x:.2f}}<br>"
-                        f"{d_y}: %{{y:.2f}}<br>"
-                        f"{d_b}: %{{customdata[1]:.2f}}<br>"
-                        f"<b>三维度总分: %{{customdata[2]:.2f}}</b><extra></extra>"
+                        f"<b>%{{text}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>"
+                        f"{d_b}: %{{customdata[1]:.2f}}<br><b>总分: %{{customdata[2]:.2f}}</b><extra></extra>"
                     )
                 ))
-                fig.update_layout(title=f"{title_label}：表现分布 (Bubble Size={d_b})", height=500)
+                fig.update_layout(title=f"{title_label}：维度表现分布", height=450, xaxis_title=f"{d_x} 评分", yaxis_title=f"{d_y} 评分")
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
                 # --- 2. 交互式卡片根因下钻 ---
-                st.markdown(f"##### 🎯 {title_label} - 核心投诉根因详细分析")
-                selected_asin = st.selectbox("选择产品查看投诉详情", res_df['short_name'].unique(), key=f"sel_{suffix}")
+                st.markdown(f"##### 🎯 {title_label} - 核心投诉根因下钻")
+                selected_asin = st.selectbox("选择产品查看详情", res_df['short_name'].unique(), key=f"sel_{suffix}")
                 target_row = res_df[res_df['short_name'] == selected_asin].iloc[0]
 
                 cols = st.columns(3)
-                dims_map = [(d_x, 'score_x', f'{d_x}_reason', f'{d_x}_cnt'), 
-                            (d_y, 'score_y', f'{d_y}_reason', f'{d_y}_cnt'), 
-                            (d_b, 'score_bubble_val', f'{d_b}_reason', f'{d_b}_cnt')]
+                # 映射：维度名, 分数列, 原因列, 计数列
+                dims_map = [
+                    (d_x, 'score_x', 'reason_x', 'cnt_x'),
+                    (d_y, 'score_y', 'reason_y', 'cnt_y'),
+                    (d_b, 'score_b_val', 'reason_b', 'cnt_b')
+                ]
 
                 for i, (name, s_col, r_col, c_col) in enumerate(dims_map):
                     with cols[i]:
-                        st.info(f"**{name}**\n\n得分: {target_row[s_col]:.2f} (样本:{int(target_row[c_col])})")
-                        with st.expander("查看详情"):
-                            st.write(target_row[r_col])
-                    with cols[i]:
-                        # 渲染模拟卡片
-                        score_val = target_row[score_col]
+                        score_val = target_row[s_col]
                         color = "#d9534f" if score_val < 3.5 else "#f0ad4e" if score_val < 4.2 else "#5cb85c"
                         
+                        # 渲染带颜色的卡片头部
                         st.markdown(f"""
-                        <div style="border-left: 5px solid {color}; padding: 10px; background-color: #f9f9f9; border-radius: 5px; height: 120px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: bold; font-size: 16px;">{name}</span>
-                                <span style="color: {color}; font-weight: bold;">得分: {score_val:.2f} ⭐</span>
+                        <div style="border-left: 5px solid {color}; padding: 10px; background-color: #f9f9f9; border-radius: 5px; height: 110px; margin-bottom: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: bold; font-size: 15px; color: #333;">{name}</span>
+                                <span style="color: {color}; font-weight: bold; font-size: 16px;">{score_val:.2f} ⭐</span>
                             </div>
-                            <p style="font-size: 12px; color: #666; margin-top: 5px;">样本提及数: {int(target_row[cnt_col])}</p>
-                            <p style="font-size: 13px; font-weight: bold; margin-bottom: 0;">核心投诉根因预判:</p>
+                            <p style="font-size: 12px; color: #666; margin-top: 8px; margin-bottom: 4px;">样本数: {int(target_row[c_col])}</p>
+                            <p style="font-size: 13px; font-weight: bold; color: #444;">核心投诉根因:</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # 交互按钮：展开查看原文
-                        with st.expander("🔍 点击展开评论原文"):
-                            st.info(f"“{target_row[reason_col]}”")
+                        # 折叠查看具体文字
+                        with st.expander("🔍 展开查看原文"):
+                            st.info(f"“{target_row[r_col]}”")
 
-                # --- 3. 产品参数对照表 ---
-                with st.expander("📋 查看该人群下所有产品参数明细"):
+                # --- 3. 参数明细 ---
+                with st.expander("📋 查看产品参数明细"):
                     table_rows = []
                     columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                     for _, row in res_df.iterrows():
@@ -1031,6 +1020,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
