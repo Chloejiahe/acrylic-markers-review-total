@@ -934,7 +934,7 @@ if not df.empty:
                     st.warning(f"⚠️ {title_label} 匹配维度下数据量过小，无气泡可显示")
                     return
 
-                # --- 1. 绘制气泡图 ---
+# --- 1. 绘制气泡图 (颜色综合三个维度评分总和) ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
                     x=res_df['score_x'], 
@@ -942,21 +942,25 @@ if not df.empty:
                     mode='markers+text',
                     text=res_df['short_name'], 
                     textposition="top center", 
-                    # 重点：通过 customdata 将原始的 score_bubble_val 传给图表
+                    # 传入原始数据用于悬停显示
                     customdata=res_df[['full_sku', 'score_bubble_val']], 
                     marker=dict(
-                        size=res_df['score_bubble_val'] * 12, # 这里乘以12仅用于视觉显示
-                        color=res_df['score_x'] + res_df['score_y'], 
-                        colorscale='RdYlGn', 
+                        size=res_df['score_bubble_val'] * 12, # 视觉放大倍数
+                        color=res_df['total_sum'],           # 颜色由三维度总和决定
+                        cmin=3.0,                            # 固定颜色轴最小值
+                        cmax=15.0,                           # 固定颜色轴最大值
+                        colorscale='RdYlGn',                 # 红-黄-绿渐变
                         showscale=True, 
+                        colorbar=dict(title="综合实力(总分)"),
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    # 修正悬停：%{customdata[1]} 获取的是原始 1-5 分值，而非几十的像素值
+                    # 修正悬停模板，显示原始 1-5 评分
                     hovertemplate = (
                         f"<b>%{{customdata[0]}}</b><br>"
                         f"{d_x}: %{{x:.2f}}<br>"
                         f"{d_y}: %{{y:.2f}}<br>"
-                        f"{d_b}: %{{customdata[1]:.2f}}"
+                        f"{d_b}: %{{customdata[1]:.2f}}<br>"
+                        f"三维度总分: %{{marker.color:.2f}}"
                         f"<extra></extra>"
                     )
                 ))
@@ -968,18 +972,20 @@ if not df.empty:
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
-                # --- 2. 绘制参数对照表 (一定一定要对齐：仅显示图中出现的产品) ---
+                # --- 2. 绘制参数对照表 (数据源严格锁定为 res_df) ---
                 st.markdown(f"##### 📋 {title_label} - 图中产品参数明细")
                 table_rows = []
                 columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
                 
-                # 遍历 res_df 确保同步
+                # 遍历绘图专用的 res_df，确保表格与气泡一一对应
                 for _, row in res_df.iterrows():
                     full_sku = row['full_sku']
+                    # 使用下划线严格拆分字符串
                     parts = str(full_sku).split('_')
                     row_data = {col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)}
                     table_rows.append(row_data)
                 
+                # 隐藏索引渲染表格
                 st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # --- 渲染逻辑 ---
@@ -1002,6 +1008,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
