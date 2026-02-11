@@ -74,7 +74,8 @@ FEATURE_DIC = {
                          'love the winter palette', 'gorgeous wintery shades','perfect for christmas', 'great holiday color scheme', 'love the halloween set'],
             '正面-喜欢霓虹/荧光/夜光': ['love the neon colors', 'super bright neon', 'the neon really pops', 'vibrant neon shades', 'glows under blacklight', 'perfect for blacklight art', 'glow pretty bright under blacklight', 'colors glow in the dark', 'UV art'],
             '正面-喜欢金属/珠光/亮片系': ['love the metallic colors', 'great metallic effect', 'beautiful metallic sheen', 'shiny metal finish', 'gorgeous chrome finish', 'looks like real metal', 'love the pearlescent finish', 'beautiful shimmer', 'amazing liquid chrome effect', 'very reflective', 'stunning iridescent colors', 'love the lustre', 'metallic/ glittery', 'too sparkly', 'glitter lover', 'amazing after sealing with clear glaze'],
-            '负面-效果不符(无闪粉)': ['zero glitter whatsoever', 'no sparkle at all', 'not super metallic or shiney', 'just metallic', 'lots of silver in the brush end'],
+            '负面-显色偏差/严重色差': ['RED markers AREN\'T RED', 'red was definitely more on the pink side', 'red look more like coral', 'color not what I needed', 'not a bright white', 'white is barely white', 'discolored lines', 'looked rather washed out', 'faint on the rock art'],
+            '负面-效果名不副实(闪粉/金属)': ['zero glitter whatsoever', 'no sparkle at all', 'not super metallic or shiney', 'just metallic', 'lots of silver in the brush end','DEFINITELY NOT GLITTER', 'no actual glitter coming out', 'more metallic than glitter', 'just metallic', 'only silver paint came out', 'glitter is either gold or silver and sits on top', 'no real color just glitter', 'no sparkle', 'zero glitter to be found'],
             '负面-色系搭配/质量评价': ["palette is ugly", "colors don't go well together", 'weird color combination', 'unusable colors in set', 'poorly curated', 'terrible color choices', 'bad color selection', 'the colors clash', 'no color harmony', 'not a cohesive palette', 'colors are jarring', 'dark and light colors'],
             '中性-提及标准/基础色系': ['standard colors', 'basic set', 'primary colors', 'secondary colors', 'classic colors',
                           'essential colors', 'core colors', 'fundamental palette', 'starter set of colors','introductory palette', 'traditional colors',
@@ -1000,6 +1001,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
