@@ -306,20 +306,20 @@ FEATURE_DIC = {
             '中性-提及收纳': ['storage case', 'carrying case', 'pen holder', 'pen stand', 'pen roll', 'organizer tray', 'layout of the tray', 'how they are organized'],
         },
         '多样性与适配性': {
-            '正面-用途广泛': ['multi-purpose', 'all-in-one', 'jack of all trades', 'works for everything','use it for everything', 'handles a variety of tasks', 'works on multiple surfaces',
+            '正面-用途广泛': [ 'great for many different projects', 'works on a variety of surfaces', 'use on various surfaces', 'multi-surface use', 'use for a variety of projects', 'perfect for all sorts of projects','multi-purpose', 'all-in-one', 'jack of all trades', 'works for everything','use it for everything', 'handles a variety of tasks', 'works on multiple surfaces',
                       'use on different surfaces', 'good for many different projects', 'one set for all my needs','great for both drawing and writing'],
-            '负面-用途单一': ['not versatile', 'lacks versatility', 'not multi-purpose', 'single-purpose', 'single use','one-trick pony', 'limited use', 'very limited in its use', 'limited application',  'only for paper', 'only works on paper', 'doesn\'t work on other surfaces',
+            '负面-用途单一': ['not meant for all surfaces', 'limited use on certain materials','not versatile', 'lacks versatility', 'not multi-purpose', 'single-purpose', 'single use','one-trick pony', 'limited use', 'very limited in its use', 'limited application',  'only for paper', 'only works on paper', 'doesn\'t work on other surfaces',
                      'only good for one thing', 'useless for anything else', 'very specific use'],
             '正面-可拓展性 (Collection can be expanded)': [ 'expandable collection', 'can add to my collection', 'love adding to my collection', 'complete my collection', 'collect all the colors', 'love that they release new sets', 'new colors available',
                                       'hope they release more colors', 'can\'t wait for new colors','limited edition colors', 'love the special editions', 'collector\'s edition'],
-            '负面-可拓展性差 (Poor expandability)': ['no new colors', 'collection is limited', 'wish they had more shades', 'no new sets released','stagnant collection', 'line seems to be discontinued', 'never release new colors',
+            '负面-可拓展性差 (Poor expandability)': ['wish they had more muted colors', 'looking for a full range but not getting it', 'no new colors', 'collection is limited', 'wish they had more shades', 'no new sets released','stagnant collection', 'line seems to be discontinued', 'never release new colors',
                                    'can\'t expand my collection', 'no updates to the color range', 'stuck with the same colors', 'wish they would expand the range', 'color range is too small', 'no new releases'],
-            '正面-可补充性 (Can be replenished)': ['refillable', 'refillable ink', 'ink refills available', 'can buy refills', 'replaceable cartridges','buy individually', 'can buy single pens', 'sold individually', 'available as singles', 'open stock',
+            '正面-可补充性 (Can be replenished)': [ 'tips are reversible','refillable', 'refillable ink', 'ink refills available', 'can buy refills', 'replaceable cartridges','buy individually', 'can buy single pens', 'sold individually', 'available as singles', 'open stock',
                                  'don\'t have to buy the whole set', 'can just replace the one I need','replaceable nibs', 'can replace the nibs', 'replacement nibs available'],
-            '负面-可补充性差 (Poor replenishability)': ["can't buy single", 'not sold individually', 'not available individually', 'can\'t buy individual pens', 'not sold as singles','wish they sold refills', 'no refills available', 'can\'t find refills', 'ink is not refillable', 'no refill cartridges', 'no replacement nibs', 'can\'t replace the tip', 'no replacement parts',
+            '负面-可补充性差 (Poor replenishability)': ['not refillable', 'replacement tips cost almost as much as a new marker', 'difficult to find replacement tips', 'dried out and not refillable',"can't buy single", 'not sold individually', 'not available individually', 'can\'t buy individual pens', 'not sold as singles','wish they sold refills', 'no refills available', 'can\'t find refills', 'ink is not refillable', 'no refill cartridges', 'no replacement nibs', 'can\'t replace the tip', 'no replacement parts',
                                    'have to buy a whole new set', 'forced to rebuy the set', 'must buy the entire set again'],
-            '正面-单支购买': ['can buy single white pens', 'available as individual markers', 'don\'t need to buy a whole pack for one color', 'sold as singles for replacement'],
-            '负面-不可单支购买': ['wasteful to buy a new set', 'no single replacements', 'can\'t find individual pens for sale', 'forced to buy 12 just for the black one'],
+            '正面-单支购买': ['available as singles','can buy single white pens', 'available as individual markers', 'don\'t need to buy a whole pack for one color', 'sold as singles for replacement'],
+            '负面-不可单支购买': [ 'wish I could buy these markers easily individually', 'can\'t buy individual colors', 'forced to buy a set for one color','wasteful to buy a new set', 'no single replacements', 'can\'t find individual pens for sale', 'forced to buy 12 just for the black one'],
             '中性-提及用途广泛性': ['versatility', 'multi-purpose', 'all-in-one', 'works on multiple surfaces', 'use for different things', 'all purpose', 'various uses'],
             '中性-提及可拓展性': ['expandable collection', 'add to the collection', 'complete the set', 'new colors','new sets released', 'limited edition', 'collect all the colors'],
             '中性-提及可补充性': ['refillable', 'open stock', 'sold individually', 'buy single pens', 'replacement nibs', 'ink refills', 'refill cartridges'],
@@ -1001,6 +1001,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
