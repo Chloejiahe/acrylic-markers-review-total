@@ -893,24 +893,43 @@ if not df.empty:
                     
                     def get_metric_with_reason(target_df, dimension):
                         if dimension == "其他": return 3.0, 0, "N/A"
-                        keywords = []
-                        if dimension in FEATURE_DIC:
-                            for sub_cat in FEATURE_DIC[dimension].values():
-                                keywords.extend(sub_cat)
-                        if not keywords: return None, 0, ""
                         
-                        pat = '|'.join([re.escape(k) for k in keywords if k.strip()])
+                        # 获取该维度下所有的细分关键词
+                        dim_rules = FEATURE_DIC.get(dimension, {})
+                        if not dim_rules: return None, 0, ""
+
+                        # 汇总所有关键词用于粗筛
+                        all_keywords = []
+                        for k_list in dim_rules.values():
+                            all_keywords.extend(k_list)
+                        
+                        pat = '|'.join([re.escape(k) for k in all_keywords if k.strip()])
                         matched = target_df[target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)]
                         
                         if matched.empty: return None, 0, "未提及"
                         
-                        # --- 修改逻辑：抓取该维度下所有评分<=3的差评原文 ---
-                        neg_comments = matched[matched['Rating'] <= 3].sort_values("Rating")
+                        # --- 细分标签统计逻辑 ---
+                        # 只针对评分 <= 3 的评论进行痛点细分统计
+                        neg_matched = matched[matched['Rating'] <= 3]
                         
-                        if not neg_comments.empty:
-                            # 提取所有唯一的差评内容，不进行 100 字符截断
-                            all_neg_texts = neg_comments['s_text'].unique().tolist()
-                            reason = "\n\n---\n\n".join(all_neg_texts) 
+                        if not neg_matched.empty:
+                            tag_stats = {}
+                            # 遍历 FEATURE_DIC 里的细分项 (例如: '负面-笔头磨损分叉')
+                            for tag, keywords in dim_rules.items():
+                                if '负面' in tag:
+                                    tag_name = tag.split('-')[-1] # 提取 "笔头磨损分叉"
+                                    tag_pat = '|'.join([re.escape(k) for k in keywords])
+                                    # 统计该细分标签在差评中出现的次数
+                                    count = neg_matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE).sum()
+                                    if count > 0:
+                                        tag_stats[tag_name] = count
+                            
+                            # 按次数排序并格式化输出
+                            if tag_stats:
+                                sorted_tags = sorted(tag_stats.items(), key=lambda x: x[1], reverse=True)
+                                reason = " | ".join([f"{t}({c}次)" for t, c in sorted_tags])
+                            else:
+                                reason = "存在低分评价但未匹配到具体痛点标签"
                         else:
                             reason = "评价较正面"
                         
@@ -1024,6 +1043,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
