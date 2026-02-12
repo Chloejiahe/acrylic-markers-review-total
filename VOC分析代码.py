@@ -43,7 +43,7 @@ FEATURE_DIC = {
             '正面-营销-颜色准确(VS 网图)': ['beautiful colors just like the pictures','matches the description', 'exactly as advertised', 'what you see is what you get', 'matches the online photo', 'true to the swatch', 'photo is accurate'],
             '负面-营销-图片误导 (VS 网图)': ['colors do not look like what is pictured','not as bright as pictured','looks different from the online swatch', 'not the color in the picture', 'misrepresented color', 'photo is misleading', 'swatch card is inaccurate'],
             '正面-生产-品控(VS 其他笔)': ['color is consistent throughout', 'consistent color', 'consistency', 'no variation between pens', 'reliable color', 'batch is consistent'],
-            '负面-生产-品控偏差(VS 其他笔)': ['didn't work consistently','inconsistent batch', 'color varies from pen to pen', 'my new pen is a different shade', 'no quality control', 'batch variation', 'def. different'],
+            '负面-生产-品控偏差(VS 其他笔)': ["didn't work consistently", 'inconsistent batch', 'color varies from pen to pen', 'my new pen is a different shade', 'no quality control', 'batch variation', 'def. different'],
             '中性-提及笔帽颜色': ['cap color', 'barrel color', 'match the cap', 'color of the cap', 'color on the barrel', 'cap match', 'indicator on the cap', 'swatch on the barrel', 'color indicated on the pen'],
             '中性-提及网图/色卡': ['swatch card', 'color swatch', 'online swatch', 'swatching', 'swatch test', 'product photo', 'online photo', 'listing photo', 'website image', 'advertised picture', 'photo in the listing'],
         },
@@ -1044,6 +1044,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
