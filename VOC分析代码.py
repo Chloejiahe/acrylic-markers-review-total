@@ -114,7 +114,7 @@ FEATURE_DIC = {
             '负面-按压泵吸差/漏墨': ['hard to prime', 'impossible to start', 'pumping for 10 minutes', 'stuck valve', 'nib receded', 'ink gushed', 'massive blob', 'messy splattered'],
             '正面-弹性/可替换': ['flexible', 'bouncy', 'nice spring', 'replaceable nibs', 'can replace tips'],
             '负面-硬度/不可替换': ['too stiff', 'too soft', 'mushy', 'no replacement', "can't replace"],
-            '中性-提及笔头': ['dual tip', 'brush tip', 'fine liner', 'chisel nib', 'bullet point', 'dot marker', 'line variation', '0.5mm']
+            '中性-提及笔头': ['dual tip', 'brush tip', 'fine liner', 'chisel nib', 'bullet point', 'dot marker', 'line variation', '0.5mm'],
         },
         '笔头耐用性': {
             '正面-耐磨损/抗分叉': ["doesn't fray", 'no fraying', 'resists fraying', 'not splitting', 'still intact', 'no signs of wear', 'holds up'],
@@ -124,19 +124,19 @@ FEATURE_DIC = {
             '正面-坚固抗损': ['durable tip', 'sturdy nib', 'robust', 'heavy duty', 'resilient', 'withstands pressure', "doesn't break"],
             '负面-意外损坏': ['bent tip', 'breaks easily', 'snapped', 'cracked tip', 'chipped', 'damaged', 'tip fell out', 'pushed in', 'receded'],
             '负面-寿命不匹配': ['tip wore out before ink', 'died before the ink', 'ink left but tip is useless', 'nib is gone but still has ink'],
-            '正面-寿命长': ['long lasting tip', 'outlasts the ink', 'good longevity', 'lasts a long time']
+            '正面-寿命长': ['long lasting tip', 'outlasts the ink', 'good longevity', 'lasts a long time'],
         },
         '流畅性': {
-            '正面-书写流畅': ['writes smoothly', 'buttery smooth', 'glides on surface', 'effortless application', 'flows like a dream', 'like silk', 'no resistance', 'smooth as butter', 
-                         'glides across the canvas', 'seamless flow', 'very fluid'],
-            '负面-干涩/刮纸/断墨': ['scratchy', 'feels scratchy on paper', 'scratches the paper', 'scratchy nib','writes dry', 'arrived dried out', 'dried up quickly', 'pen is dry', 'ink seems dry',
-                         'skips', 'skipping', 'skips constantly', 'ink skips', 'hard start', 'hard starts', 'stops and starts','inconsistent flow', 'uneven ink flow', 'ink flow is not consistent',
-                        'stops writing', 'stopped working', 'died after a few uses'],
-            '负面-出墨过多/漏墨': [ 'blotchy', 'splotchy', 'leaves ink blots', 'ink blobs','too much ink', 'puts down too much ink', 'gushes ink', 'ink gushes out', 'too wet',
-                        'feathers badly', 'bleeds everywhere','leaks', 'leaking ink', 'leaked all over', 'ink leaked everywhere', 'leaky pen', 'arrived leaking'],
-            '正面-速干且平整': [ 'dries flat', 'no streaks', 'smooth finish', 'not watery', 'solid line', 'vibrant coverage', 'thick paint feel', 'professional finish', 
-                        'uniform texture', 'velvety finish', 'opaque delivery'],
-            '负面-漆感差/稀薄/起泡': [ 'watery ink', 'too thin', 'pigment and water separated', 'faint color flow', 'bubbles in paint', 'air bubbles', 'frothy ink', 'see-through lines', 
+            '正面-书写流畅': ["go on smoothly", "smooth writing", "smoothly glide on canvas", "smooth flow", "smoothly and effortlessly", "write smoothly", "apply smoothly", "paint goes on smoothly", "smooth pigment", "flows well", "continuous smooth flow", "smooth and even coverage", "flow smoothly", "glide effortlessly", "smooth paint", "smoothness of it is amazing","creamy, velvety, and smooth", "paint comes out smoothly and neatly", "smooth acrylic paint", 
+                             "lay down a very smooth, even line", "colors flow in an even manner", "clean smooth lines","smooth flow from the tips", "very smooth to write with", "thick paint like ink","color doesn’t run or bleed", "smooth color application", "evenly distributed", "brush tip glides well", "smooth flow of the brush head", "looks smooth and vibrant", "smooth strokes", "flow of the paint is smooth and consistent", "smooth as silk", 
+                             "ink flow is flawless and consistent", "smooth application", "paint flow is very nice","flowed super smooth", "write as easily and smoothly as a regular marker", "writes smooth", "smoothest markers", "ink flows at just the right amount", "tips and the paint run smooth","smooth and fluid", "flow smoothly without smudging", "smooth, even color", 
+                             "ink flows smoothly", "silky smooth", "smooth and consistent stream of ink","buttery smooth", "glides on surface", "effortless application", "flows like a dream","no resistance", "smooth as butter", "glides across the canvas", "seamless flow", "very fluid"],
+            '负面-干涩/刮纸/断墨': ["streaky, inconsistent results","stop working very quickly","hard to keep pen going smoothly","acts dry","Flow is not constant","not be as smooth","dried out quick","don't release paint smoothly","NOT a consistent, smooth writing","pulling up little shreds of the paper","paper peeling","pigment clogs up",'scratchy', 'feels scratchy on paper', 'scratches the paper', 'scratchy nib','writes dry', 'arrived dried out', 'dried up quickly', 'pen is dry', 'ink seems dry',
+                         'skips', 'skipping', 'skips constantly', 'ink skips', 'hard start', 'hard starts', 'stops and starts','inconsistent flow', 'uneven ink flow', 'ink flow is not consistent'],
+            '负面-出墨过多/漏墨': ["pours out a big clump", "ink will overflow","cause lumps","splatter","tiny little splatters","leaked","ink leaked everywhere","gush paint out","excessive drippage","globs of paint","paint pooling","bleed through", 'blotchy', 'splotchy', 'leaves ink blots', 'ink blobs','too much ink', 'puts down too much ink', 'gushes ink', 'ink gushes out', 'too wet',
+                        'feathers badly', 'bleeds everywhere','leaking ink', 'leaked all over', 'ink leaked everywhere', 'leaky pen', 'arrived leaking'],
+            '正面-速干且平整': ["fast drying", "not messy", "dries quickly", "dries flat", "no streaks", "smooth finish", "not watery", "solid line", "vibrant coverage", "thick paint feel", "professional finish", "uniform texture", "velvety finish", "opaque delivery", "dries pretty fast", "not messy at all", "dries quickly and doesn't bleed or feather", "mess-free application", "dry pretty fast", "dries almost instantly", "quick-drying formula", "dries fast", "dries rather quickly", "dried very fast", "dries fairly quickly", "dries super fast", "odorlessand quick dry", "quick dry to touch", "dried very quick", "fastest drying times", "dry time is minimal", "dries extremely fast", "dried quickly", "dried nicely", "Quick dry", "dry quickly", "dries water proof", "dried extremely fast"],
+            '负面-漆感差/稀薄/起泡': ["paint bubbles up","bubble on the side", "paint is thin",'watery ink', 'too thin', 'pigment and water separated', 'faint color flow', 'bubbles in paint', 'air bubbles', 'frothy ink', 'see-through lines', 
                         'weak pigment', 'diluted color', 'runny paint'],
         },
         '墨水特性': {
@@ -1044,6 +1044,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
