@@ -372,7 +372,7 @@ FEATURE_DIC = {
             '中性-提及运输': ['shipping', 'delivery', 'arrival condition', 'transit', 'shipped', 'arrived',  'damage','damaged', 'broken', 'crushed', 'shipping box', 'protective packaging'],
             '中性-提及客服/售后': ['customer service', 'contacted seller', 'contacted support', 'seller response','replacement', 'refund', 'return process', 'exchange', 'missing items', 'wrong item sent', 'issue resolved'],
         },
-        '笔的容量': {
+        '容量': {
             '正面-容量大/耐用': ['large capacity', 'holds a lot of ink', 'lasts long', 'long lasting', 'plenty of ink', 'good amount of ink', 'lasts forever', 'lasts a while', 'doesn\'t run out quickly', 'longevity', 'still going strong after', 'haven\'t run out yet', 'still has ink', 'lots of paint', 'good ink capacity', 'great capacity'],
             '负面-容量小/消耗快': ['runs out fast', 'runs out quickly', 'dries out too fast', 'doesn\'t last long', 'ran out after', 'ran out in', 'ran dry quickly', 'used up fast', 'empty after', 'died quickly', 'not much ink', 'low ink capacity', 'wish it held more ink', 'not enough ink', 'too small', 'ink runs out too fast', 'consumes quickly', 'waste of money because they dry out', 'disappears fast', 'gone in no time'],
         },            
@@ -1048,6 +1048,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
