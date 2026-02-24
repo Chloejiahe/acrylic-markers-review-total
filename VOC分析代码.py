@@ -318,24 +318,24 @@ FEATURE_DIC = {
             '中性-提及兼容丙烯马克笔': ['on top of acrylic', 'over acrylic', 'with acrylic markers', 'with posca', 'on paint marker'],
         },
         '场景表现': {
-            '正面-适合大面积填色': ['great for coloring', 'good for large areas', 'fills spaces evenly', 'no streaking in large blocks', 'coloring book friendly', 'smooth coverage'],
-            '负面-不适合大面积填色': ['streaky when coloring', 'pills the paper when coloring large sections', 'dries too fast for large areas', 'bad for filling large spaces', 'leaves marker lines', 'patchy on large areas','takes forever to fill', 'not for solid blocks'],
-            '正面-适合漫画/动漫创作': ['great for manga', 'perfect for comics', 'blends skin tones beautifully', 'works for anime style', 'good for cel shading', 'great for character art'],
+            '正面-适合大面积填色': ["ideal for filling in larger areas", "filling in with the broader tip", "bold, sweeping strokes with ease", "covers larger areas with ease", "consistent coverage without streaks", "quick to cover large areas", "fills bigger sections fast", "wide nib for large coverage", "great for coloring", "good for large areas", "fills spaces evenly", "no streaking in large blocks", "coloring book friendly", "smooth coverage"],
+            '负面-不适合大面积填色': ['may require two coats for best opacity on slick surfaces', 'can run out faster with heavy use','lines were sketchy and discolored','curls paper in large areas', 'pills paper when filling big sections', 'paint piles up on large spots','streaky when coloring', 'pills the paper when coloring large sections', 'dries too fast for large areas', 'bad for filling large spaces', 'leaves marker lines', 'patchy on large areas','takes forever to fill', 'not for solid blocks'],
+            '正面-适合漫画/动漫创作': ['ideal for character art','great for manga', 'perfect for comics', 'blends skin tones beautifully', 'works for anime style', 'good for cel shading', 'great for character art'],
             '负面-不适合漫画/动漫创作': ['hard to blend skin tones', "colors aren't right for manga", 'smears my line art', 'not good for comic art'],
-            '正面-适合插画创作': ['great for illustration', 'professional illustration results', 'layers beautifully for art', 'vibrant illustrations', 'perfect for artists'],
+            '正面-适合插画创作': ['adds highlights to artwork','elevate your art projects','great for illustration', 'professional illustration results', 'layers beautifully for art', 'vibrant illustrations', 'perfect for artists'],
             '负面-不适合插画创作': ['not for professional illustration', 'colors are not vibrant enough for art', 'muddy blends for illustration', 'hobby grade only', 'muddy blends'],
-            '正面-适合着色书/填色': ['great for coloring books', 'perfect for adult coloring', 'coloring book friendly', 'no bleed in coloring book', "doesn't ghost on coloring pages", 'safe for single-sided books', 'fine tip is perfect for intricate designs', 'great for mandalas', 'gets into tiny spaces'],
-            '负面-不适合着色书/填色': ['not for coloring books', 'ruined my coloring book', 'bleeds through every page', 'does not cover the light grey lines of the coloring book', 'start to eat into the paper','ghosting', 'blobs of paint on the page', 'lost sharpness after multiple uses'],
+            '正面-适合着色书/填色': ['great for colouring details', 'smooth on coloring pages', 'no bleed through thin paper', 'covers lines well', 'ideal for colouring books','great for coloring books', 'perfect for adult coloring', 'coloring book friendly', 'no bleed in coloring book', "doesn't ghost on coloring pages", 'safe for single-sided books', 'fine tip is perfect for intricate designs', 'great for mandalas', 'gets into tiny spaces'],
+            '负面-不适合着色书/填色': ['bleeds through regular paper', 'leaves brush marks', 'paint blots on coloring pages', 'tips fray on coloring paper','not for coloring books', 'ruined my coloring book', 'bleeds through every page', 'does not cover the light grey lines of the coloring book', 'start to eat into the paper','ghosting', 'blobs of paint on the page', 'lost sharpness after multiple uses'],
             '正面-适合书法/手写艺术': ['perfect for calligraphy', 'great for hand lettering', 'nice thick and thin strokes', 'good for upstrokes and downstrokes', 'flexible tip for lettering', 'rich black for calligraphy'],
             '负面-不适合书法/手写艺术': ['tip is too stiff for calligraphy', 'hard to control line variation', 'ink feathers during lettering', 'not good for brush lettering', 'ink is not dark enough for calligraphy'],
-            '正面-适合手工艺/物品定制': ['great for diy projects', 'perfect for customizing shoes', 'works on canvas bags', 'permanent on rocks and wood', 'good for crafting'],
-            '负面-不适合手工艺/物品定制': ['wipes off from plastic', 'not for outdoor use', 'color fades on fabric', "doesn't work on sealed surfaces"],
-            '正面-适合儿童/教学': ['great for kids', 'safe for children', 'non-toxic', 'washable ink', 'durable tip for heavy hands', 'bright colors for kids', 'good for classroom use'],
+            '正面-适合手工艺/物品定制': ['excellent for wedding guest book', 'signing wooden signs', 'decorating book bags', 'polymer clay coloring', 'key holder diy','great for diy projects', 'perfect for customizing shoes', 'works on canvas bags', 'permanent on rocks and wood', 'good for crafting'],
+            '负面-不适合手工艺/物品定制': ['wipes off from plastic', 'not for outdoor use', 'color fades on fabric', 'doesn't work on sealed surfaces'],
+            '正面-适合儿童/教学': ['easy for small hands', 'keeps kids occupied', 'great for school carnivals','great for kids', 'safe for children', 'non-toxic', 'washable ink', 'durable tip for heavy hands', 'bright colors for kids', 'good for classroom use'],
             '负面-不适合儿童/教学': ['strong smell not for kids', 'ink stains clothes', 'tip broke easily with pressure', 'cap is hard for a child to open'],
-            '正面-适合刻字/细节': ['perfect for lettering', 'great for calligraphy', 'nice for writing greetings', 'fine tip for small details', 'beautiful for sentiments'],
-            '负面-不适合刻字/细节': ['too thick for lettering', 'bleeds when writing', 'hard to do calligraphy', 'tip is too soft for precision'],
-            '正面-多表面DIY': ['perfect for rock painting', 'works great on wood', 'customizing sneakers', 'painting on glass', 'ceramic decorating', 'canvas art', 'outdoor decor', 'painting pumpkins', 'ornament decorating'],
-            '负面-不能多表面DIY': ['scrapes off glass', 'not permanent on glass', 'easily wipe off from glass', 'not for outdoor rocks', 'faded on outdoor use', 'not waterproof', 'smudges when wet','wipes off if not sealed', 'does not stick to metal', 'hard to start on metal', 'not for metal shop', 'not for non-paper surfaces', 'wipes off after even a week of sitting', 'paint doesn\'t stay on anything'],
+            '正面-适合刻字/细节': ['control for small details', 'detailing work','3M fine tip for precision','perfect for lettering', 'great for calligraphy', 'nice for writing greetings', 'fine tip for small details', 'beautiful for sentiments'],
+            '负面-不适合刻字/细节': ['too thick for tiny details', 'skips during fine work', 'not precise enough for small areas','too thick for lettering', 'bleeds when writing', 'hard to do calligraphy', 'tip is too soft for precision'],
+            '正面-多表面DIY': ['works on denim jackets', 'permanent on stained wood', 'decorate ceramic and glass art', 'ideal for rock painting and garden decorations','painting on eggs and ornaments','works on metal and plastic art','painting pumpkins','customizing shoes and onesies','perfect for rock painting', 'works great on wood', 'customizing sneakers', 'painting on glass', 'ceramic decorating', 'canvas art', 'outdoor decor', 'painting pumpkins', 'ornament decorating'],
+            '负面-不能多表面DIY': ['doesn’t work at all on DIY chalkboard','not permanent on glass if not sealed','wipes off without a second coat on slick surfaces','scrapes off glass', 'not permanent on glass', 'easily wipe off from glass', 'not for outdoor rocks', 'faded on outdoor use', 'not waterproof', 'smudges when wet','wipes off if not sealed', 'does not stick to metal', 'hard to start on metal', 'not for metal shop', 'not for non-paper surfaces', 'wipes off after even a week of sitting', 'paint doesn\'t stay on anything'],
             '中性-提及大面积填色': ['coloring large areas', 'filling in spaces', 'large coverage', 'background coloring'],
             '中性-提及漫画/动漫创作': ['manga', 'comic art', 'anime art', 'line art', 'character art', 'cel shading'],
             '中性-提及插画创作': ['illustration', 'illustrating', 'artwork', 'for my illustrations'],
@@ -1141,6 +1141,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
