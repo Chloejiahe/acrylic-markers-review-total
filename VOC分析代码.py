@@ -110,7 +110,31 @@ FEATURE_DIC = {
                 "white is barely white", "discolored lines", "looked rather washed out", 
                 "faint on the rock art", "barely shows up"
             ],
-            '负面-效果名不副实(闪粉/金属)': ['these are just vaguely coloured shiny mud','they are a little shinny but not glittery at all','definitely not glitter','doesn't sparkle','definitely not glitter','the glitter doesn't come across very well','no actual glitter','not as glittery as I thought','no glitter or shimmer','zero glitter whatsoever', 'no sparkle at all', 'not super metallic or shiney', 'just metallic', 'lots of silver in the brush end','DEFINITELY NOT GLITTER', 'no actual glitter coming out', 'more metallic than glitter', 'just metallic', 'only silver paint came out', 'glitter is either gold or silver and sits on top', 'no real color just glitter', 'no sparkle', 'zero glitter to be found'],
+            '负面-效果名不副实(闪粉/金属)': [
+                "these are just vaguely coloured shiny mud",
+                "they are a little shinny but not glittery at all",
+                "definitely not glitter",
+                "doesn't sparkle",
+                "definitely not glitter",
+                "the glitter doesn't come across very well",
+                "no actual glitter",
+                "not as glittery as I thought",
+                "no glitter or shimmer",
+                "zero glitter whatsoever",
+                "no sparkle at all",
+                "not super metallic or shiney",
+                "just metallic",
+                "lots of silver in the brush end",
+                "DEFINITELY NOT GLITTER",
+                "no actual glitter coming out",
+                "more metallic than glitter",
+                "just metallic",
+                "only silver paint came out",
+                "glitter is either gold or silver and sits on top",
+                "no real color just glitter",
+                "no sparkle",
+                "zero glitter to be found"
+            ],
             '负面-色系搭配/质量评价': ["no real brown", "no deep colors", "not many deep colors", "phatlo type colors", "triplicates of some colors", "no greens", "no true red", "no standard red", "no blue", "no purples", "limited dark shades", "poor variety of colors", "color range is uneven", "lots of pinks few greens", "color selection could be better","not enough browns", "only one brown", "too many purples", "too many greens", "too many yellows", "limited color range", "color is limited", "no proper brown", "no true dark pink", "no hot pink", "no neon pink", "duplicate light pink", "lack of darker shades", "lack of vibrant shades", "odd color selection", "color assortment is limited", "need more color options","none of them other than white and black are really what I'd expect","missing rich dark colors","colors could vary a little more","not enough color variety","colors aren’t as deep as I prefer",'not enough distinct colors','lack of primary colors','missing basic shades','no true red or orange if you are looking for that', 'duplicate ones of the same colors', 'only one bright red', 'the color selection is not that great', 'the colors of these pens are NOT basic', 'no standard blue or green', 'the green is not a kelly green but a dark hunter green', 'the only basic colors in this set are black and white', 'the set doesn't have a deep red color', 'no assortment of basics (like a true red, navy, etc.)', 'the green colors aren't even actually green', 'they're just darker blues', 'lack of every color', 'there is no true brown or red', 'the green is not a kelly green','wish I had some more colors', 'color selection is a little bland', 'colors in this pack aren't that useful for normal coloring pages', 'missing critical shades: beige, tan, warm grays', 'brown leans orange-red','weird color combination','terrible color choices','Too many neon colors','bad color selection','they kinda all look the same','not all of the white markers are white',"no white included","missing basic colors","limited without neutrals", "only pastel colors","no black included", "palette is ugly", "colors don't go well together", 'weird color combination', 'unusable colors in set', 'poorly curated', 'terrible color choices', 'bad color selection', 'the colors clash', 'no color harmony', 'not a cohesive palette', 'colors are jarring', 'dark and light colors'],
             '中性-提及标准/基础色系': ['standard colors', 'basic set', 'primary colors', 'secondary colors', 'classic colors',
                           'essential colors', 'core colors', 'fundamental palette', 'starter set of colors','introductory palette', 'traditional colors',
@@ -1083,6 +1107,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
