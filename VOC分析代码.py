@@ -329,7 +329,7 @@ FEATURE_DIC = {
             '正面-适合书法/手写艺术': ['perfect for calligraphy', 'great for hand lettering', 'nice thick and thin strokes', 'good for upstrokes and downstrokes', 'flexible tip for lettering', 'rich black for calligraphy'],
             '负面-不适合书法/手写艺术': ['tip is too stiff for calligraphy', 'hard to control line variation', 'ink feathers during lettering', 'not good for brush lettering', 'ink is not dark enough for calligraphy'],
             '正面-适合手工艺/物品定制': ['excellent for wedding guest book', 'signing wooden signs', 'decorating book bags', 'polymer clay coloring', 'key holder diy','great for diy projects', 'perfect for customizing shoes', 'works on canvas bags', 'permanent on rocks and wood', 'good for crafting'],
-            '负面-不适合手工艺/物品定制': ['wipes off from plastic', 'not for outdoor use', 'color fades on fabric', 'doesn't work on sealed surfaces'],
+            '负面-不适合手工艺/物品定制': ["wipes off from plastic", "not for outdoor use", "color fades on fabric", "doesn't work on sealed surfaces"],
             '正面-适合儿童/教学': ['easy for small hands', 'keeps kids occupied', 'great for school carnivals','great for kids', 'safe for children', 'non-toxic', 'washable ink', 'durable tip for heavy hands', 'bright colors for kids', 'good for classroom use'],
             '负面-不适合儿童/教学': ['strong smell not for kids', 'ink stains clothes', 'tip broke easily with pressure', 'cap is hard for a child to open'],
             '正面-适合刻字/细节': ['control for small details', 'detailing work','3M fine tip for precision','perfect for lettering', 'great for calligraphy', 'nice for writing greetings', 'fine tip for small details', 'beautiful for sentiments'],
@@ -1141,6 +1141,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
