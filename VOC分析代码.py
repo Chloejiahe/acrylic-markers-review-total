@@ -59,7 +59,7 @@ FEATURE_DIC = {
         },   
         '色系评价': {
             '正面-喜欢标准/基础色系': ['good standard colors', 'love the basic set', 'has all the primary colors', 'classic colors', 'great essential colors', 'perfect starter palette', 'all the fundamental colors', 'primary and secondary colors'],
-            '正面-喜欢鲜艳/高饱和': [["colors come out vivid", "rich in colors", "bright and visible", "beautiful bright vivid colors", "full coverage", "great color saturation", "beautiful pigmentation", "pigment is perfect","rich and vibrant", "highly pigmented", "gorgeous vivid hues", "bright and beautiful", "stunning color output", "lovely pigmentation", "fantastic color payoff","beautiful pigment","great pigment","pigment is true to color",'beautiful bright colours','stunning iridescent colors','clear and bright colors','bright colourful colors','very bright even on different colored papers', 'very vivid and saturated color', 'vibrant and wonderful color', 'love the vibrant colors', 'love the rich colors', 'love the bold colors', 'love how vivid the colors are', 'highly saturated', 'colors are saturated', 'colors pop', 'really pop', 'makes the colors pop', 'colors really stand out', 'colors jump off the page', 'so full of life'],
+            '正面-喜欢鲜艳/高饱和': ["colors come out vivid", "rich in colors", "bright and visible", "beautiful bright vivid colors", "full coverage", "great color saturation", "beautiful pigmentation", "pigment is perfect","rich and vibrant", "highly pigmented", "gorgeous vivid hues", "bright and beautiful", "stunning color output", "lovely pigmentation", "fantastic color payoff","beautiful pigment","great pigment","pigment is true to color",'beautiful bright colours','stunning iridescent colors','clear and bright colors','bright colourful colors','very bright even on different colored papers', 'very vivid and saturated color', 'vibrant and wonderful color', 'love the vibrant colors', 'love the rich colors', 'love the bold colors', 'love how vivid the colors are', 'highly saturated', 'colors are saturated', 'colors pop', 'really pop', 'makes the colors pop', 'colors really stand out', 'colors jump off the page', 'so full of life'],
             '正面-喜欢粉彩色/柔和系': ["gentle color tones","soft pastel shades",'pastel colours are beautiful','these pastel colors are beautiful', 'love the pastel colors', 'beautiful pastels', 'adore the soft colors', 'perfect muted tones', 'calming color palette', 'soothing shades', 'gentle on the eyes', 'subtle and elegant', 'love the macaron colors', 'the muted palette is gorgeous', 'macaron colors'],
             '正面-喜欢复古/怀旧色系': ['love the vintage colors', 'perfect retro palette', 'nostalgic color scheme', 'love the old school colors','adore the vintage feel', 'love the retro vibe', 'perfect nostalgic feel',
                           'great aged palette', 'beautiful antique colors', 'love the heritage colors','70s color palette', 'mid-century modern colors','love the mustard yellow', 'love the avocado green', 'love the burnt orange'],
@@ -1048,6 +1048,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
