@@ -921,17 +921,16 @@ if not df.empty:
             # 展示核心投诉根因卡片（参考竞品板块样式）
             cause_color = "#c0392b" if dim_score < 3.5 else "#d35400"
             st.markdown(f"""
-                <div style="padding:15px; border-radius:10px; border-left: 8px solid {cause_color}; 
+                <div style="padding:12px 15px; border-radius:10px; border-left: 8px solid {cause_color}; 
                             background-color: #fff5f5; border-top:1px solid #eee; border-right:1px solid #eee;
-                            margin-bottom: 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
-                    <h4 style="margin:0; color:#2c3e50;">🎯 【{target_dim}】核心投诉根因总结</h4>
-                    <p style="font-size:15px; margin-top:10px; line-height:1.6;">
-                        <span style="color:#2c3e50; font-weight:bold;">深度洞察：</span>
-                        <span style="color:#c0392b;">{root_cause}</span>
+                            margin-bottom: 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.02);">
+                    <h4 style="margin:0; color:#2c3e50; font-size:16px;">核心投诉根因</h4>
+                    <p style="font-size:15px; margin-top:8px; line-height:1.5; color:#c0392b; margin-bottom:0; font-weight:500;">
+                        {root_cause}
                     </p>
                 </div>
             """, unsafe_allow_html=True)
-            
+
             # --- 原有逻辑：原声评价列表 ---
             neg_keywords = []
             if target_dim in FEATURE_DIC:
@@ -1179,6 +1178,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
