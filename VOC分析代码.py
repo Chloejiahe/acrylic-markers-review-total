@@ -908,11 +908,31 @@ if not df.empty:
             else:
                 st.success("无明显低分痛点词")
 
-        # 原声溯源
+       # 原声溯源
         st.write("")
         with st.expander(f"🔍 深度探查：真实用户评价回溯"):
             target_dim = st.selectbox("选择想要探查的痛点维度:", analysis_res['维度'].tolist(), key=f"select_dim_{sub_name}")
             
+            # --- 新增逻辑：提取核心投诉根因 ---
+            dim_info = analysis_res[analysis_res['维度'] == target_dim].iloc[0]
+            root_cause = dim_info['痛点分布'] if '痛点分布' in dim_info else "暂无根因分析"
+            dim_score = dim_info['维度评分'] if '维度评分' in dim_info else 0
+            
+            # 展示核心投诉根因卡片（参考竞品板块样式）
+            cause_color = "#c0392b" if dim_score < 3.5 else "#d35400"
+            st.markdown(f"""
+                <div style="padding:15px; border-radius:10px; border-left: 8px solid {cause_color}; 
+                            background-color: #fff5f5; border-top:1px solid #eee; border-right:1px solid #eee;
+                            margin-bottom: 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
+                    <h4 style="margin:0; color:#2c3e50;">🎯 【{target_dim}】核心投诉根因总结</h4>
+                    <p style="font-size:15px; margin-top:10px; line-height:1.6;">
+                        <span style="color:#2c3e50; font-weight:bold;">深度洞察：</span>
+                        <span style="color:#c0392b;">{root_cause}</span>
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # --- 原有逻辑：原声评价列表 ---
             neg_keywords = []
             if target_dim in FEATURE_DIC:
                 # 严格筛选：只抓取包含“负面”或“不满”标签的关键词
@@ -923,32 +943,28 @@ if not df.empty:
             if neg_keywords:
                 valid_keys = [re.escape(k) for k in neg_keywords if k.strip()]
                 if not valid_keys:
-                    st.info("该维度下暂无定义的负面关键词。")
+                    st.info("该维度下暂无有效的负面关键词定义。")
                 else:
                     search_pattern = '|'.join(valid_keys)
                     
-                    # 筛选逻辑：Rating <= 5 且 匹配负面关键词，展示全部结果
+                    # 筛选逻辑：展示匹配负面词的全部结果
                     vocal_df = sub_df[
                         (sub_df['Rating'] <= 5) & 
                         (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))
                     ].copy()
                     
-                    # 去重并按评分升序排列
                     vocal_df = vocal_df.drop_duplicates(subset=['s_text'])
                     vocal_df = vocal_df.sort_values(by='Rating', ascending=True)
 
                     if not vocal_df.empty:
                         total_count = len(vocal_df)
-                        st.warning(f"以下是用户在【{target_dim}】维度的真实痛点原声（共 {total_count} 条）：")
+                        st.write(f"💬 **用户评价原声回溯 ({total_count} 条)：**")
                         
-                        # 使用滚动容器展示全量内容，高度设为 500
                         container_height = 500 if total_count > 5 else None
-                        
                         with st.container(height=container_height):
                             for i, (_, row) in enumerate(vocal_df.iterrows()):
                                 text = row['s_text']
-                                
-                                # 仅对负面关键词进行高亮
+                                # 负面关键词高亮
                                 sorted_keywords = sorted(list(set(neg_keywords)), key=len, reverse=True)
                                 for word in sorted_keywords:
                                     if word and word.lower() in text.lower():
@@ -958,7 +974,7 @@ if not df.empty:
                                 if i < total_count - 1:
                                     st.divider()
                     else:
-                        st.info("该维度下暂未捕捉到高代表性的负面原声评价。")
+                        st.info("该维度下暂未匹配到对应的负面评价原声。")
             else:
                 st.write("该维度暂无定义的负面关键词。")
 
@@ -1163,6 +1179,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
