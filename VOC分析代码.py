@@ -915,37 +915,40 @@ if not df.empty:
             
             neg_keywords = []
             if target_dim in FEATURE_DIC:
-                # 抓取该维度下定义的所有关键词
+                # 严格筛选：只抓取包含“负面”或“不满”标签的关键词
                 for tag, keys in FEATURE_DIC[target_dim].items():
-                    neg_keywords.extend(keys)
+                    if '负面' in tag or '不满' in tag:
+                        neg_keywords.extend(keys)
 
             if neg_keywords:
                 valid_keys = [re.escape(k) for k in neg_keywords if k.strip()]
-                if valid_keys:
+                if not valid_keys:
+                    st.info("该维度下暂无定义的负面关键词。")
+                else:
                     search_pattern = '|'.join(valid_keys)
                     
-                    # 筛选逻辑：取消 .head() 限制，获取全部匹配项
+                    # 筛选逻辑：Rating <= 3 且 匹配负面关键词，展示全部结果
                     vocal_df = sub_df[
                         (sub_df['Rating'] <= 3) & 
                         (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))
                     ].copy()
                     
-                    # 去重并按评分升序排列（先看差评）
+                    # 去重并按评分升序排列
                     vocal_df = vocal_df.drop_duplicates(subset=['s_text'])
                     vocal_df = vocal_df.sort_values(by='Rating', ascending=True)
 
                     if not vocal_df.empty:
                         total_count = len(vocal_df)
-                        st.warning(f"已为您检索到关于【{target_dim}】的 {total_count} 条真实痛点原声：")
+                        st.warning(f"以下是用户在【{target_dim}】维度的真实痛点原声（共 {total_count} 条）：")
                         
-                        # 使用带高度的容器展示全量内容，防止页面过长
+                        # 使用滚动容器展示全量内容，高度设为 500
                         container_height = 500 if total_count > 5 else None
                         
                         with st.container(height=container_height):
                             for i, (_, row) in enumerate(vocal_df.iterrows()):
                                 text = row['s_text']
                                 
-                                # 高亮逻辑
+                                # 仅对负面关键词进行高亮
                                 sorted_keywords = sorted(list(set(neg_keywords)), key=len, reverse=True)
                                 for word in sorted_keywords:
                                     if word and word.lower() in text.lower():
@@ -955,7 +958,9 @@ if not df.empty:
                                 if i < total_count - 1:
                                     st.divider()
                     else:
-                        st.info(f"该维度下暂未捕捉到匹配关键词的负面评价。")
+                        st.info("该维度下暂未捕捉到高代表性的负面原声评价。")
+            else:
+                st.write("该维度暂无定义的负面关键词。")
 
         st.markdown("---")
         
@@ -1158,6 +1163,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
