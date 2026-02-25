@@ -1018,9 +1018,7 @@ if not df.empty:
                 final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
                 d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
                 
-                # 严格对齐 analyze_sentiments 的全局基准分
                 global_ref_rating = data_source['Rating'].mean() if not data_source.empty else 0
-                
                 plot_data = []
                 all_skus = data_source['sku_spec'].unique()
                 
@@ -1028,89 +1026,91 @@ if not df.empty:
                     sku_df = data_source[data_source['sku_spec'] == sku]
                     
                     def get_metric_extended(target_df, dimension):
-                        if dimension == "其他": return 3.0, 0, 0, "N/A", "无原声"
-                        
+                        if dimension == "其他": return 3.0, 0, 0, "N/A", "N/A"
                         dim_rules = FEATURE_DIC.get(dimension, {})
-                        if not dim_rules: return 0.0, 0, 0, "", "" # 默认改回 0.0
+                        if not dim_rules: return None, 0, 0, "", ""
 
-                        # 匹配该维度所有关键词
                         all_keywords = [k for k_list in dim_rules.values() for k in k_list]
                         pat = '|'.join([re.escape(k) for k in all_keywords if k.strip()])
                         matched = target_df[target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)]
                         
-                        if matched.empty: return 0.0, 0, 0, "未提及", "未提及" # 匹配不到也给 0.0
+                        if matched.empty: return None, 0, 0, "未提及", "未提及"
                         
+                        # --- 修改逻辑：不再依赖 Rating <= 3，而是通过负面关键词命中判定痛点 ---
                         neg_count = 0
                         hit_tags = {}
-                        neg_vocal_list = [] 
-
-                        for tag, keywords in dim_rules.items():
+                        neg_text_list = []
+                        
+                        # 获取该维度下定义的所有负面/不满标签
+                        neg_tag_list = [t for t in dim_rules.keys() if '负面' in t or '不满' in t]
+                        
+                        for tag in neg_tag_list:
+                            keywords = dim_rules[tag]
                             tag_pat = '|'.join([re.escape(k) for k in keywords])
-                            tag_matched_mask = matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE)
-                            tag_matched_df = matched[tag_matched_mask]
+                            # 找出所有提到该负面标签的行（无视总分 Rating）
+                            is_neg = matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE)
+                            tag_match_count = is_neg.sum()
                             
-                            if not tag_matched_df.empty:
-                                if '负面' in tag or '不满' in tag:
-                                    count = len(tag_matched_df)
-                                    neg_count += count
-                                    hit_tags[tag.split('-')[-1]] = count
-                                    neg_vocal_list.extend(tag_matched_df['s_text'].unique().tolist())
+                            if tag_match_count > 0:
+                                neg_count += tag_match_count
+                                hit_tags[tag.split('-')[-1]] = tag_match_count
+                                # 将这些包含具体负面词的原文存起来
+                                neg_text_list.extend(matched[is_neg]['s_text'].tolist())
                         
                         dim_score = matched['Rating'].mean()
-                        rating_gap = max(global_ref_rating - dim_score, 0)
-                        sku_impact = round(neg_count * rating_gap, 2)
+                        # 机会指数计算：即便平均分高，如果 neg_count 很大，impact 依然会提升
+                        gap = max(global_ref_rating - dim_score, 0)
+                        # 稍微调整公式，确保高分但有痛点的 SKU 也能被观察到（给 neg_count 基础权重）
+                        sku_impact = round(neg_count * (gap + 0.5), 2) 
                         
-                        tag_summary = " | ".join([f"{t}({c}次)" for t, c in sorted(hit_tags.items(), key=lambda x: x[1], reverse=True)])
-                        reason = tag_summary if tag_summary else "无明确负面标签命中"
+                        tag_summary = " | ".join([f"{t}({c})" for t, c in sorted(hit_tags.items(), key=lambda x: x[1], reverse=True)])
+                        reason = tag_summary if tag_summary else "该维度有提及但未命中具体负面词"
                         
-                        unique_vocals = list(set(neg_vocal_list))
-                        raw_vocal = "\n\n".join([f"• {t}" for t in unique_vocals]) if unique_vocals else "未匹配到负面评价原声"
+                        # 原声回溯：去重并展示
+                        unique_neg_texts = list(set(neg_text_list))
+                        raw_vocal = "\n\n".join([f"• {t}" for t in unique_neg_texts]) if unique_neg_texts else "无明确负面关键词原声"
                         
                         return dim_score, len(matched), sku_impact, reason, raw_vocal
 
-                    # --- 获取三个维度数据 ---
                     res_x = get_metric_extended(sku_df, d_x)
                     res_y = get_metric_extended(sku_df, d_y)
                     res_b = get_metric_extended(sku_df, d_b)
                     
-                    # 只要任何一个维度有数据就参与绘图，缺失维度赋默认值 0
-                    parts = str(sku).split('_')
-                    short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
-                    plot_data.append({
-                        'full_sku': str(sku), 'short_name': short_name,
-                        'score_x': res_x[0] if res_x[0] is not None else 0, 
-                        'cnt_x': res_x[1], 'impact_x': res_x[2], 'reason_x': res_x[3], 'vocal_x': res_x[4],
-                        'score_y': res_y[0] if res_y[0] is not None else 0, 
-                        'cnt_y': res_y[1], 'impact_y': res_y[2], 'reason_y': res_y[3], 'vocal_y': res_y[4],
-                        'score_b': res_b[0] if res_b[0] is not None else 0, # 确保 size 不会是 None
-                        'cnt_b': res_b[1], 'impact_b': res_b[2], 'reason_b': res_b[3], 'vocal_b': res_b[4],
-                        'total_impact': res_x[2] + res_y[2] + res_b[2]
-                    })
+                    if res_x[0] is not None:
+                        parts = str(sku).split('_')
+                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
+                        plot_data.append({
+                            'full_sku': str(sku), 'short_name': short_name,
+                            'score_x': res_x[0], 'cnt_x': res_x[1], 'impact_x': res_x[2], 'reason_x': res_x[3], 'vocal_x': res_x[4],
+                            'score_y': res_y[0], 'cnt_y': res_y[1], 'impact_y': res_y[2], 'reason_y': res_y[3], 'vocal_y': res_y[4],
+                            'score_b': res_b[0], 'cnt_b': res_b[1], 'impact_b': res_b[2], 'reason_b': res_b[3], 'vocal_b': res_b[4],
+                            'total_impact': res_x[2] + res_y[2] + res_b[2]
+                        })
 
                 res_df = pd.DataFrame(plot_data)
-                if res_df.empty: return
+                if res_df.empty:
+                    st.warning("⚠️ 匹配数据量不足，无法生成矩阵")
+                    return
 
-                # --- 1. 气泡图渲染 (加入 fillna 容错) ---
+                # --- 1. 气泡图绘制 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'].fillna(0), 
-                    y=res_df['score_y'].fillna(0), 
-                    mode='markers+text',
+                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
                     text=res_df['short_name'], textposition="top center",
                     marker=dict(
-                        size=res_df['score_b'].fillna(0) * 10 + 5, # 加 5 像素基准值，防止气泡完全消失
-                        color=res_df['total_impact'], 
-                        colorscale='Reds', showscale=True, reversescale=True
+                        size=res_df['score_b'] * 10,
+                        color=res_df['total_impact'],
+                        colorscale='Reds', showscale=True, reversescale=True,
+                        colorbar=dict(title="机会指数 (含高分痛点)")
                     ),
-                    hovertemplate = f"<b>%{{text}}</b><br>{d_x}分: %{{x:.2f}}<br>{d_y}分: %{{y:.2f}}<br>机会指数: %{{marker.color}}<extra></extra>"
+                    hovertemplate = "<b>%{text}</b><br>X轴分: %{x:.2f}<br>Y轴分: %{y:.2f}<br>机会指数: %{marker.color}<extra></extra>"
                 ))
                 st.plotly_chart(fig, use_container_width=True)
 
-                # --- 2. 交互式卡片渲染 (保持不变) ---
-                st.markdown(f"##### 🎯 {title_label} - 核心投诉根因下钻")
-                selected_name = st.selectbox("选择产品查看详情", res_df['short_name'].unique(), key=f"sel_{suffix}")
+                # --- 2. 交互式卡片下钻 ---
+                st.markdown(f"##### 🎯 {title_label} - 深度痛点溯源")
+                selected_name = st.selectbox("选择产品查看维度详情", res_df['short_name'].unique(), key=f"sel_{suffix}")
                 row = res_df[res_df['short_name'] == selected_name].iloc[0]
-
                 cols = st.columns(3)
                 display_map = [(d_x, 'score_x', 'impact_x', 'reason_x', 'vocal_x', 'cnt_x'),
                                (d_y, 'score_y', 'impact_y', 'reason_y', 'vocal_y', 'cnt_y'),
@@ -1118,22 +1118,22 @@ if not df.empty:
 
                 for i, (name, s_col, im_col, r_col, v_col, c_col) in enumerate(display_map):
                     with cols[i]:
-                        impact_val = row[im_col]
-                        color = "#d9534f" if impact_val > 10 else "#f0ad4e" if impact_val > 5 else "#5cb85c"
+                        impact = row[im_col]
+                        card_color = "#c0392b" if impact > 15 else "#d35400" if impact > 5 else "#27ae60"
                         st.markdown(f"""
-                            <div style="border-left: 6px solid {color}; padding: 12px; background-color: #fcfcfc; border-radius: 8px; min-height: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="font-weight: bold; font-size: 15px;">{name}</span>
-                                    <span style="color: {color}; font-weight: bold;">{row[s_col]:.2f} ⭐</span>
+                            <div style="padding:15px; border-radius:10px; border-left: 8px solid {card_color}; background-color: #fdfefe; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); min-height: 220px;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <h4 style="margin:0; font-size:16px;">{name}</h4>
+                                    <span style="color:{card_color}; font-weight:bold;">{row[s_col]:.2f} ⭐</span>
                                 </div>
-                                <p style="font-size: 11px; color: #888; margin: 4px 0;">样本数: {int(row[c_col])} | <b>机会指数: {impact_val}</b></p>
-                                <hr style="margin: 8px 0; opacity: 0.2;">
-                                <p style="font-size: 13px; font-weight: bold;">核心投诉根因:</p>
-                                <p style="font-size: 12px; color: #c0392b;">{row[r_col]}</p>
+                                <p style="color:gray; font-size:11px; margin-top:5px;">样本数: {int(row[c_col])} | <b>机会指数: {impact}</b></p>
+                                <hr style="margin:10px 0; border:0; border-top:1px solid #eee;">
+                                <p style="font-size:13px; margin-bottom:5px;"><b>命中负面标签：</b></p>
+                                <p style="font-size:13px; color:#c0392b; line-height:1.4;">{row[r_col]}</p>
                             </div>
                         """, unsafe_allow_html=True)
-                        with st.expander("🔍 全部评价原声回溯"):
-                            st.write(row[v_col])
+                        with st.expander(f"💬 查看 {name} 原声"):
+                            st.markdown(f"<div style='font-size:12px; color:#555;'>{row[v_col]}</div>", unsafe_allow_html=True)
 
                 # --- 3. 参数明细 ---
                 with st.expander("📋 查看产品参数明细"):
@@ -1164,6 +1164,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
