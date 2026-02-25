@@ -675,52 +675,51 @@ def extract_advanced_features(df):
 
 def analyze_sentiments(df_sub):
     results = []
+    # 获取全站（当前子类目）的真实平均分，作为基准
+    global_avg_rating = df_sub['Rating'].mean() if not df_sub.empty else 0
     total_reviews_count = len(df_sub)
     
     for category, sub_dict in FEATURE_DIC.items():
-        pos_score, neg_score = 0.0, 0.0
-        hit_details, matched_ratings = [], []
-        dimension_vocal_count = 0 
+        pos_count, neg_count = 0, 0
+        hit_details = []
+        all_matched_ratings = []
 
         for tag, keywords in sub_dict.items():
             pattern = '|'.join([re.escape(k) for k in keywords])
-            mask = df_sub['s_text'].str.contains(pattern, na=False)
+            mask = df_sub['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
             matched_df = df_sub[mask]
             
             if not matched_df.empty:
-                if '负面' in tag:
-                    valid_match = matched_df[(matched_df['s_pol'] < 0.1) | (matched_df['Rating'] <= 3)]
-                    weight = 1.5 if valid_match['Rating'].mean() <= 2.1 else 1.0
-                    neg_score += (len(valid_match) * weight)
-                    count = len(valid_match)
-                elif '正面' in tag:
-                    valid_match = matched_df[(matched_df['s_pol'] > -0.1) | (matched_df['Rating'] >= 4)]
-                    pos_score += len(valid_match)
-                    count = len(valid_match)
-                else: count = 0
+                all_matched_ratings.extend(matched_df['Rating'].tolist())
+                if '负面' in tag or '不满' in tag:
+                    neg_count += len(matched_df)
+                    hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)}次)")
+                elif '正面' in tag or '好评' in tag:
+                    pos_count += len(matched_df)
 
-                if count > 0:
-                    dimension_vocal_count += count
-                    matched_ratings.extend(valid_match['Rating'].tolist())
-                    if '负面' in tag:
-                        hit_details.append(f"{tag.split('-')[-1]}({count}次)")
-
-        dim_rating = np.mean(matched_ratings) if matched_ratings else 0
-        total_vocal = pos_score + neg_score
-        sentiment_score = (pos_score / total_vocal * 100) if total_vocal > 0 else 0
+        # 指标计算
+        dim_vocal_total = pos_count + neg_count
+        dim_avg_rating = np.mean(all_matched_ratings) if all_matched_ratings else 0
         
-        # 置信度缩放
-        confidence = np.log1p(dimension_vocal_count) / np.log1p(max(total_reviews_count/5, 1)) 
-        confidence = min(max(confidence, 0.5), 1.2)
+        # --- 新的算法逻辑：影响力指数 ---
+        # 意义：如果维度得分低于大盘，说明它在拉低总分。差值越大，改进价值越高。
+        # 我们用 max(..., 0) 确保只有表现低于大盘的才产生正向“待改进指数”
+        rating_gap = max(global_avg_rating - dim_avg_rating, 0)
         
-        opp_index = round((neg_score * (100 - sentiment_score) * (5.1 - dim_rating) / 100) * confidence, 2)
+        # 最终算法：频次 * 落差 (这非常符合商业改进逻辑：先解决影响面大且杀伤力强的问题)
+        impact_index = round(neg_count * rating_gap, 2)
 
         results.append({
-            "维度": category, "亮点": int(pos_score), "痛点": int(neg_score),
-            "满意度": round(sentiment_score, 1), "维度评分": round(dim_rating, 2),
-            "机会指数": opp_index, "痛点分布": ", ".join(hit_details) if hit_details else "无"
+            "维度": category,
+            "亮点": pos_count,
+            "痛点": neg_count,
+            "维度评分": round(dim_avg_rating, 2),
+            "满意度": round(pos_count / dim_vocal_total * 100, 1) if dim_vocal_total > 0 else 0,
+            "机会指数": impact_index,  # 换成了更客观的 Impact 算法
+            "痛点分布": ", ".join(hit_details) if hit_details else "无"
         })
-    return pd.DataFrame(results)
+        
+    return pd.DataFrame(results).sort_values("机会指数", ascending=False)
 
 # --- 5. Streamlit 页面布局 ---
 st.set_page_config(page_title="丙烯笔深度调研", layout="wide")
@@ -1179,6 +1178,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
