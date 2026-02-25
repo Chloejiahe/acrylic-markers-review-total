@@ -445,15 +445,15 @@ FEATURE_DIC = {
             '中性-提及色卡': ['swatch card', 'color chart'],
         },
         '购买与服务体验': {
-            '正面-开箱/展示': ['beautiful presentation', 'great unboxing experience', 'perfect for a gift', 'looks professional', 'elegant packaging', 'giftable', 'nice gift box', 'well presented', 'impressive presentation',
+            '正面-开箱/展示/运输好': ['easy ordering', 'quick arrival time', 'speeded service','arrived in good condition','arrived in perfect condition','arrived in excellent condition','arrived perfectly packaged','arrived well packaged','arrived quickly','arrived early','arrived amazingly quick','arrived in record time','arrived within 1-2 days','arrived in timely manner','arrived promptly','arrived in great time','arrived very fast','arrived a day earlier than expected','arrived well packed','arrived on time','excellent presentation','fast shipping', 'prime shipping', 'quick delivery','beautiful presentation', 'great unboxing experience', 'perfect for a gift', 'looks professional', 'elegant packaging', 'giftable', 'nice gift box', 'well presented', 'impressive presentation',
                        'lovely box', 'makes a great gift', 'nicely laid out'],
-            '负面-运输/损坏': ['damaged on arrival', 'missing marker', 'pen was missing', 'not all included', 'empty slot', 'marker missing', 'one less than expected', 'incomplete set',
+            '负面-运输/损坏': ['already primed', 'without plastic covers','arrived without outer packaging','package was lost','arrived dry','arrived unusable','over a week late','took much longer','arrived almost a month','damaged on arrival', 'missing marker', 'pen was missing', 'not all included', 'empty slot', 'marker missing', 'one less than expected', 'incomplete set',
                       'arrived broken', 'arrived broken', 'pens arrived broken', 'some were broken', 'cracked on arrival', 'damaged during shipping','damaged in transit', 'arrived damaged', 'item was damaged','leaking ink', 'leaked all over', 'ink leaked everywhere', 'arrived leaking','box was crushed',
                       'package was damaged', 'box was open', 'dented tin', 'poorly packaged for shipping', 'not well protected', 'arrived in bad shape','didn’t receive all the colors', 'picture shows 15 and I received 8', 'only 8 markers', 'missing markers in set'],
-            '正面-客服/售后': ['great customer service', 'excellent customer service', 'amazing support', 'seller was helpful', 'seller was very helpful', 'very responsive seller', 'quick response', 'fast reply',
+            '正面-客服/售后': ['totally satisfied', 'stand behind their products', 'admirable', 'sorted out the problem', 'grateful for the refund', 'easy to get a refund', 'care about customer satisfaction', 'handled the situation immediately', 'remedy the problem','free replacement', 'reimbursement offered', 'helpful support', 'prompt service','great customer service', 'excellent customer service', 'amazing support', 'seller was helpful', 'seller was very helpful', 'very responsive seller', 'quick response', 'fast reply',
                       'answered my questions quickly', 'resolved my issue quickly', 'problem solved','fast replacement', 'quick replacement', 'sent a replacement right away', 'easy replacement process',
                        'easy refund', 'hassle-free refund', 'full refund was issued','went above and beyond', 'proactive customer service'],
-            '负面-客服/售后': ['bad customer service', 'terrible customer service', 'poor support', 'no customer service','seller was unresponsive', 'no response from seller', 'never replied', 'took forever to respond', 'slow response',
+            '负面-客服/售后': ['no resolution', 'ignored complaint','missed return date', 'difficult to return', 'past return window', 'no refund', 'deceptive description', 'act of deception','bad customer service', 'terrible customer service', 'poor support', 'no customer service','seller was unresponsive', 'no response from seller', 'never replied', 'took forever to respond', 'slow response',
                       'seller was unhelpful', 'refused to help', 'unwilling to help', 'could not resolve the issue','missing items', 'missing parts', 'didn\'t receive all items',
                        'wrong item sent', 'received the wrong color', 'sent the wrong size','difficult return process', 'hassle to get a refund', 'refused a refund', 'no replacement offered'],
             '中性-提及开箱/展示': ['unboxing experience', 'presentation', 'packaging', 'giftable', 'nice box', 'sturdy case', 'storage tin', 'well organized', 'comes in a case'],
@@ -1136,6 +1136,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
