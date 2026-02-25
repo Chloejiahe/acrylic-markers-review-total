@@ -233,27 +233,27 @@ FEATURE_DIC = {
                         'weak pigment', 'diluted color', 'runny paint'],
         },
         '墨水特性': {
-            '正面-干燥快/防涂抹': ['quick dry', 'dry so fast','fast dry','not smear','not bleed','no bleed', 'not smear or bleed','dries quickly', 'dries instantly', 'dries immediately', 'fast-drying ink','no smear', 'no smudge', 'zero smear', 'zero smudge', 'smear proof', 'smudge proof',
+            '正面-干燥快/防涂抹': ['doesn\'t feather', 'mess-free', 'mess-free application', 'no smudging or smearing', 'no bleeding', 'doesn\'t bleed or feather', 'clean finish', 'no splatter', 'no leakage', 'no clogging', 'no skipping', 'no blobs', 'no blotch', 'no blotch in sight','dry true to color', 'dry fairly quickly', 'dry fast enough to layer','quick dry', 'dry so fast','fast dry','not smear','not bleed','no bleed', 'not smear or bleed','dries quickly', 'dries instantly', 'dries immediately', 'fast-drying ink','no smear', 'no smudge', 'zero smear', 'zero smudge', 'smear proof', 'smudge proof',
                         'smudge resistant', 'smear resistant', 'doesn\'t smear', 'doesn\'t smudge','good for lefties', 'perfect for left-handed', 'lefty friendly','can highlight over it', 'highlight without smearing'],
-            '负面-干燥慢/易涂抹': ['smears easily', 'smudges easily', 'smears across the page', 'smudges when touched', 'takes forever to dry', 'long drying time', 'never fully dries', 'still wet after minutes', 'slow to dry',
+            '负面-干燥慢/易涂抹': ['smudge if your hand accidentally touches the ink', 'ink did not dry and it smeared', 'smears lightly if it gets wet', 'paint lifting up if you layer on top of it before fully dry', 'smudges for left handed people','paint remains wet', 'transfers to other surfaces', 'takes 20+ minutes to dry','smears easily', 'smudges easily', 'smears across the page', 'smudges when touched', 'takes forever to dry', 'long drying time', 'never fully dries', 'still wet after minutes', 'slow to dry',
                         'not for left-handed', 'not for lefties', 'smears for left-handers', 'gets ink on my hand','smears with highlighter', 'smudges when layering', 'ruined my work by smudging'],
-            '正面-环保/安全/无味': ['non-toxic', 'AP certified non-toxic', 'certified non-toxic', 'no harmful chemicals', 'acid-free', 'archival quality', 'archival ink', 'photo safe','safe for kids', 'kid-safe', 'child-safe', 'great for children',
+            '正面-环保/安全/无味': ['scentless','water-based', 'non-toxic formula', 'safe for children', 'no harsh fumes', 'non-toxic acrylic','non-toxic', 'AP certified non-toxic', 'certified non-toxic', 'no harmful chemicals', 'acid-free', 'archival quality', 'archival ink', 'photo safe','safe for kids', 'kid-safe', 'child-safe', 'great for children',
                         'no smell', 'no odor', 'odorless', 'scent-free', 'low odor', 'no fumes', 'no harsh smell', 'doesn\'t smell bad', 'xylene-free'],
-            '负面-气味难闻': ['bad smell', 'strong smell', 'chemical smell', 'toxic smell', 'horrible odor', 'awful scent','overpowering smell', 'overwhelming fumes', 'nauseating smell', 'smells terrible',
+            '负面-气味难闻': ['throat irritated', 'strong odor', 'tight and irritated throat','bad smell', 'strong smell', 'chemical smell', 'toxic smell', 'horrible odor', 'awful scent','overpowering smell', 'overwhelming fumes', 'nauseating smell', 'smells terrible',
                      'stinks', 'reek', 'stench', 'acrid smell', 'plastic smell','gives me a headache', 'headache inducing', 'smell is too strong', 'lingering smell'],
-            '正面-持久/防水': ['truly permanent', 'permanent bond', 'archival quality', 'archival ink', 'museum quality','is waterproof', 'water resistant', 'doesn\'t run with water', 'survives spills', 'water-fast',
+            '正面-持久/防水': ['waterproof', 'fade-resistant', 'long-lasting', 'preserving its beauty for years to come', 'adheres well', 'permanence once dry', 'doesn\'t rub off', 'stays vibrant even after drying', 'paint stays on','permanent when dry', 'resists casual rubbing', 'durable on surfaces', 'long-lasting on projects','truly permanent', 'permanent bond', 'archival quality', 'archival ink', 'museum quality','is waterproof', 'water resistant', 'doesn\'t run with water', 'survives spills', 'water-fast',
                       'fade proof', 'fade resistant', 'lightfast', 'excellent lightfastness', 'uv resistant', 'doesn\'t fade over time'],
-            '负面-易褪色/不防水': ['not permanent', 'isn\'t permanent', 'fades quickly', 'fades over time', 'colors have faded', 'not lightfast','not waterproof', 'isn\'t water resistant', 'washes away', 'runs with water', 'smears with water',
+            '负面-易褪色/不防水': ['not waterproof', 'smudges with water', 'ink bleeds when wet', 'rubs off', 'will rub off', 'washes off easily', 'scratches off', 'not permanent', 'fades too fast', 'colors have faded','comes off easily', 'rubs off with light touch', 'washes off glass', 'not waterproof on plastic', 'scratches off phone cases', 'not permanent', 'isn\'t permanent', 'fades quickly', 'fades over time', 'colors have faded', 'not lightfast','not waterproof', 'isn\'t water resistant', 'washes away', 'runs with water', 'smears with water',
                         'ruined by a drop of water', 'ink bleeds when wet'],
-            '正面-续航长': ['lasts a long time', 'lasted for months', 'seems to last forever', 'plenty of ink', 'large ink capacity', 'still going strong', 'has a lot of ink', 'haven\'t run out yet',
+            '正面-续航长': ['ink last longer', 'plenty of ink', 'ink lasts forever', 'haven\'t dried up yet', 'lasted a long time', 'still going strong', 'great longevity', 'long-lasting ink', 'lasted a year of continuous use', 'ink payoff remains good', 'long-lasting with daily use','lasts a long time', 'lasted for months', 'seems to last forever', 'plenty of ink', 'large ink capacity', 'still going strong', 'has a lot of ink', 'haven\'t run out yet',
                     'great longevity', 'long-lasting ink'],
-            '负面-消耗快': ['runs out quickly', 'ran out of ink fast', 'dries out too fast', 'died quickly','empty fast', 'used up too fast', 'ran dry very quickly', 'doesn\'t last long','run out of paint',
+            '负面-消耗快': ['dried out really fast', 'dried out within a month', 'ran out of ink quickly', 'ink runs out fast', 'dries out after few uses', 'ran out after one use', 'used up too fast', 'doesn\'t last long','dries out after few uses', 'ink runs out super fast', 'dries out in a day', 'almost devoid of ink', 'ink runs out after one use', 'dries out within a month','runs out quickly', 'ran out of ink fast', 'dries out too fast', 'died quickly','empty fast', 'used up too fast', 'ran dry very quickly', 'doesn\'t last long','run out of paint',
                      'ink runs out in a day', 'not much ink inside', 'low ink capacity', 'wish it held more ink'],
-            '正面-金属效果好': ['great metallic effect', 'nice metallic sheen', 'shiny metal finish', 'strong metallic look', 'looks like real metal', 'beautiful chrome finish', 'very reflective'],
-            '负面-金属效果差': ['dull metallic', 'not shiny', 'no metallic effect', 'looks flat', 'weak sheen', 'not reflective'],
+            '正面-金属效果好': ['metallic silver and gold were included', 'metallics are very nice and reflective', 'shiny metal finish', 'beautiful metallic sheen', 'strong metallic look', 'nice reflective', 'metallic shine','rich metallic shimmer', 'shimmers in light', 'intense metallic look','great metallic effect', 'nice metallic sheen', 'shiny metal finish', 'strong metallic look', 'looks like real metal', 'beautiful chrome finish', 'very reflective'],
+            '负面-金属效果差': ['not very metallic', 'dull metallics', 'not shiny', 'no metallic effect', 'looks flat', 'weak sheen', 'not reflective', 'metallic colors are dull', 'not sparkly', 'zero glitter','gold/silver coverage disappointing', 'not very metallic', 'dull metallics','dull metallic', 'not shiny', 'no metallic effect', 'looks flat', 'weak sheen', 'not reflective'],
             '正面-闪光效果好': ['lots of glitter', 'beautiful shimmer', 'sparkly', 'glitter is vibrant', 'nice pearlescent effect', 'very glittery', 'good sparkle'],
             '负面-闪光效果差': ['not enough glitter', 'no shimmer', 'glitter falls off', 'dull sparkle', 'barely any glitter', 'messy glitter'],
-            '正面-荧光/霓虹效果好': ['neon pops', 'very bright neon', 'glows under blacklight', 'super fluorescent', 'vibrant neon', 'glows nicely'],
+            '正面-荧光/霓虹效果好': ['almost neon bright', 'super fluorescent','neon pops', 'very bright neon', 'glows under blacklight', 'super fluorescent', 'vibrant neon', 'glows nicely'],
             '负面-荧光/霓虹效果淡': ['neon is dull', 'not very bright', "doesn't glow", 'not a true neon color', 'disappointing neon'],
             '负面-荧光/霓虹效果过饱和': ['too neon', 'too bright', 'too fluorescent', 'too neon/bright'],
             '正面-变色效果好': ['love the color change', 'chameleon effect is stunning', 'shifts colors beautifully', 'works in the sun', 'heat sensitive works'],
@@ -462,7 +462,7 @@ FEATURE_DIC = {
         },
         '容量': {
             '正面-容量大/耐用': ['large capacity', 'holds a lot of ink', 'lasts long', 'long lasting', 'plenty of ink', 'good amount of ink', 'lasts forever', 'lasts a while', 'doesn\'t run out quickly', 'longevity', 'still going strong after', 'haven\'t run out yet', 'still has ink', 'lots of paint', 'good ink capacity', 'great capacity'],
-            '负面-容量小/消耗快': ['runs out fast', 'runs out quickly', 'dries out too fast', 'doesn\'t last long', 'ran out after', 'ran out in', 'ran dry quickly', 'used up fast', 'empty after', 'died quickly', 'not much ink', 'low ink capacity', 'wish it held more ink', 'not enough ink', 'too small', 'ink runs out too fast', 'consumes quickly', 'waste of money because they dry out', 'disappears fast', 'gone in no time'],
+            '负面-容量小/消耗快': ['run a little bit dry', 'dry out', 'stop working', 'dried out really fast', 'dried out upon opening', 'ran out of ink', 'longevity doesn\'t exist', 'dried up', 'running out of ink', 'dry up', 'died quickly', 'dry out fast','dries out super fast', 'dried out after one day', 'dried out within a month', 'almost devoid of ink', 'ink runs out rapidly', 'quick drying out', 'depleted fast', 'barely any ink', 'ink gone after few uses', 'short lifespan', 'insufficient ink', 'quick consumption', 'ink vanishes fast','runs out fast', 'runs out quickly', 'dries out too fast', 'doesn\'t last long', 'ran out after', 'ran out in', 'ran dry quickly', 'used up fast', 'empty after', 'died quickly', 'not much ink', 'low ink capacity', 'wish it held more ink', 'not enough ink', 'too small', 'ink runs out too fast', 'consumes quickly', 'waste of money because they dry out', 'disappears fast', 'gone in no time'],
         },            
 }
 
@@ -1136,6 +1136,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
