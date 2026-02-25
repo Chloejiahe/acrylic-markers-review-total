@@ -927,9 +927,9 @@ if not df.empty:
                 else:
                     search_pattern = '|'.join(valid_keys)
                     
-                    # 筛选逻辑：Rating <= 3 且 匹配负面关键词，展示全部结果
+                    # 筛选逻辑：Rating <= 5 且 匹配负面关键词，展示全部结果
                     vocal_df = sub_df[
-                        (sub_df['Rating'] <= 3) & 
+                        (sub_df['Rating'] <= 5) & 
                         (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))
                     ].copy()
                     
@@ -1163,6 +1163,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
