@@ -438,12 +438,12 @@ FEATURE_DIC = {
             '正面-性价比高': ['great value for the money', 'good value for the money', 'well worth the money', 'value for money', 'great value for money', 'worth my money', 'good deal for money', 'great value for your money', 'worth the extra money', 'excellent value for the money', 'nice value for the money', 'so worth my money', 'pretty expensive but totally worth the money', 'worth the money and time', 'really good value for your money', 'great value and totally worth the money','great product great price', 'very great price', 'good price', 'great price', 'worth the price', 'well worth the price', 'nice price', 'very reasonable', 'best price', 'amazing price point', 'price is on point', 'reasonable price', 'price is very reasonable', 'unbeatable price', 'fantastic value', 'steal', 'worth every bit', 'price was perfect', 'very affordable', 'very reasonably priced', 'bargain', 'deal','affordable', 'cheap', 'great deal', 'worth the money', 'great buy', 'reasonable price', 'cheaper than', 'alternative to','excellent value', 'amazing value','inexpensive','low price', 'great price point','money well spent', 'can\'t beat the price'],
             '负面-价格昂贵': ['not worth the money', 'waste of money', 'total waste of money', 'complete waste of money', 'a waste of money', 'money waster', 'not worth your money', 'don\'t waste your money', 'waist of money', 'just a waste of money', 'not worth the time or money', 'sadly a huge waste of money', 'don\'t have money to waste on stuff that doesn\'t work', 'would be more with my time and money if I never got them at all','over priced', 'bit pricey', 'too pricey', 'quite pricey', 'little overpriced', 'premium price', 'higher price', 'pricey though', 'a little expensive', 'price is high', 'not worth the price','expensive', 'overpriced', 'not worth', 'pricey', 'costly', 'rip off', 'too much', 'waste of money','not worth it','over-priced'],
 
-            },
+        },
         '配套与服务(色卡)': {
-            '正面-提供色卡/好用': ["love the swatch card", "includes a color card", "comes with a card to help identify each color", "comes with a color card to fill in", "handy card to see what the colors look like", "came with a color card to fill in", "comes with a card to swatch colors", "easy to make a color card","love the swatch card", "includes a color card", "comes with a card to help identify each color", "comes with a color card to fill in", "handy card to see what the colors look like", "came with a color card to fill in", "comes with a card to swatch colors", "easy to make a color card",'comes with a swatch card', 'includes a swatch card', 'love the swatch card', 'helpful swatch card', 'great for swatching', 'easy to swatch', 'blank swatch card', 'pre-printed swatch card'],
-            '负面-缺少色卡/不好用': ["wish it had a color code/name on each marker", "not easy to make a color card", "no color code/name on each marker", "color card is not accurate", "color card wasn't especially true to color", "markers are unlabeled", "colors not numbered","wish it had a color code/name on each marker", "not easy to make a color card", "no color code/name on each marker", "color card is not accurate", "color card wasn't especially true to color", "markers are unlabeled", "colors not numbered",'no swatch card', "wish it had a swatch card", "doesn't come with a swatch card", 'had to make my own swatch card', 'swatch card is inaccurate', 'swatch card is useless', "colors on swatch card don't match"],
-            '中性-提及色卡': ['swatch card',  'color chart'],
-            },
+            '正面-提供色卡/好用': ['love the swatch card', 'includes a color card', 'comes with a card to help identify each color', 'comes with a color card to fill in', 'handy card to see what the colors look like', 'came with a color card to fill in', 'comes with a card to swatch colors', 'easy to make a color card', 'comes with a swatch card', 'includes a swatch card', 'helpful swatch card', 'great for swatching', 'easy to swatch', 'blank swatch card', 'pre-printed swatch card'],
+            '负面-缺少色卡/不好用': ['wish it had a color code/name on each marker', 'not easy to make a color card', 'no color code/name on each marker', 'color card is not accurate', 'color card wasn\'t especially true to color', 'markers are unlabeled', 'colors not numbered', 'no swatch card', 'wish it had a swatch card', 'doesn\'t come with a swatch card', 'had to make my own swatch card', 'swatch card is inaccurate', 'swatch card is useless', 'colors on swatch card don\'t match'],
+            '中性-提及色卡': ['swatch card', 'color chart'],
+        },
         '购买与服务体验': {
             '正面-开箱/展示': ['beautiful presentation', 'great unboxing experience', 'perfect for a gift', 'looks professional', 'elegant packaging', 'giftable', 'nice gift box', 'well presented', 'impressive presentation',
                        'lovely box', 'makes a great gift', 'nicely laid out'],
@@ -1136,6 +1136,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
