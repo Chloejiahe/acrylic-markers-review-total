@@ -431,12 +431,12 @@ FEATURE_DIC = {
         '特殊用途': {
             '正面-专业级表现': ["finish looks professional", "looks professional", 'professional grade', 'artist grade', 'pro grade', 'professional quality', 'artist quality', 'studio grade', 'museum quality', 'for serious artists', 'not student grade','professional results', 'gallery quality results', 'publication quality',
                        'industry standard', 'lightfast', 'excellent lightfastness', 'high lightfastness rating', 'fade-resistant', 'fade proof', 'archival quality', 'archival ink', 'archival pigment',"professional looking artwork", "professional paint markers", "look extremely professional", "professional-looking results", "publication quality", "long-lasting and archival-quality artwork", "archival-quality artwork"],
-            '负面-非专业级': ["not for professional art", "not professional", "not professional grade", "not professional quality", "kids projects not professional", "any professional art", "best for kids projects", "great for hobbies and amateur use", "perfect for children and casual art", "for casual use", "not for serious artists", "am not a professional", "not a professional artist", "novice tasks", "young artists", "good starter set", "good for beginners"],
+            '负面-非专业级': ["not professional grade","not for professional art", "not professional", "not professional grade", "not professional quality", "kids projects not professional", "any professional art", "best for kids projects", "great for hobbies and amateur use", "perfect for children and casual art", "for casual use", "not for serious artists", "am not a professional", "not a professional artist", "novice tasks", "young artists", "good starter set", "good for beginners"],
             '中性-提及专业性': ['professional grade', 'artist grade', 'hobby grade', 'student grade', 'pro grade', 'lightfast', 'lightfastness rating', 'archival quality', 'archival ink', 'museum quality'],
         },
         '性价比': {
-            '正面-性价比高': ['affordable', 'cheap', 'good value', 'great deal', 'worth the money', 'great buy', 'reasonable price', 'cheaper than', 'alternative to','excellent value', 'amazing value','inexpensive','low price', 'great price point','money well spent', 'can\'t beat the price'],
-            '负面-价格昂贵': ['expensive', 'overpriced', 'not worth', 'pricey', 'costly', 'rip off', 'too much', 'waste of money','not worth it','over-priced'],
+            '正面-性价比高': ['great value for the money', 'good value for the money', 'well worth the money', 'value for money', 'great value for money', 'worth my money', 'good deal for money', 'great value for your money', 'worth the extra money', 'excellent value for the money', 'nice value for the money', 'so worth my money', 'pretty expensive but totally worth the money', 'worth the money and time', 'really good value for your money', 'great value and totally worth the money','great product great price', 'very great price', 'good price', 'great price', 'worth the price', 'well worth the price', 'nice price', 'very reasonable', 'best price', 'amazing price point', 'price is on point', 'reasonable price', 'price is very reasonable', 'unbeatable price', 'fantastic value', 'steal', 'worth every bit', 'price was perfect', 'very affordable', 'very reasonably priced', 'bargain', 'deal','affordable', 'cheap', 'great deal', 'worth the money', 'great buy', 'reasonable price', 'cheaper than', 'alternative to','excellent value', 'amazing value','inexpensive','low price', 'great price point','money well spent', 'can\'t beat the price'],
+            '负面-价格昂贵': ['not worth the money', 'waste of money', 'total waste of money', 'complete waste of money', 'a waste of money', 'money waster', 'not worth your money', 'don\'t waste your money', 'waist of money', 'just a waste of money', 'not worth the time or money', 'sadly a huge waste of money', 'don\'t have money to waste on stuff that doesn\'t work', 'would be more with my time and money if I never got them at all','over priced', 'bit pricey', 'too pricey', 'quite pricey', 'little overpriced', 'premium price', 'higher price', 'pricey though', 'a little expensive', 'price is high', 'not worth the price','expensive', 'overpriced', 'not worth', 'pricey', 'costly', 'rip off', 'too much', 'waste of money','not worth it','over-priced'],
 
             },
         '配套与服务(色卡)': {
@@ -1136,6 +1136,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
