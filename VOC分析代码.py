@@ -1092,16 +1092,30 @@ if not df.empty:
                     st.warning("⚠️ 匹配数据量不足，无法生成矩阵")
                     return
 
+                # --- 核心修复：处理空值和无效数值 ---
+                # 将评分列中的 None 转为 0，防止 Plotly 报错
+                res_df['score_x'] = res_df['score_x'].fillna(0)
+                res_df['score_y'] = res_df['score_y'].fillna(0)
+                res_df['score_b'] = res_df['score_b'].fillna(0)
+                # 确保气泡大小不为负数（以防万一）
+                res_df['display_size'] = res_df['score_b'].apply(lambda x: max(x, 0) * 10)
+
                 # --- 1. 气泡图绘制 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
-                    text=res_df['short_name'], textposition="top center",
+                    x=res_df['score_x'], 
+                    y=res_df['score_y'], 
+                    mode='markers+text',
+                    text=res_df['short_name'], 
+                    textposition="top center",
                     marker=dict(
-                        size=res_df['score_b'] * 10,
+                        # 使用修复后的列
+                        size=res_df['display_size'], 
                         color=res_df['total_impact'],
-                        colorscale='Reds', showscale=True, reversescale=True,
-                        colorbar=dict(title="机会指数 (含高分痛点)")
+                        colorscale='Reds', 
+                        showscale=True, 
+                        reversescale=True,
+                        colorbar=dict(title="机会指数")
                     ),
                     hovertemplate = "<b>%{text}</b><br>X轴分: %{x:.2f}<br>Y轴分: %{y:.2f}<br>机会指数: %{marker.color}<extra></extra>"
                 ))
@@ -1164,6 +1178,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
