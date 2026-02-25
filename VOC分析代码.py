@@ -912,28 +912,50 @@ if not df.empty:
         st.write("")
         with st.expander(f"🔍 深度探查：真实用户评价回溯"):
             target_dim = st.selectbox("选择想要探查的痛点维度:", analysis_res['维度'].tolist(), key=f"select_dim_{sub_name}")
+            
             neg_keywords = []
             if target_dim in FEATURE_DIC:
+                # 抓取该维度下定义的所有关键词
                 for tag, keys in FEATURE_DIC[target_dim].items():
-                    if '负面' in tag or '不满' in tag:
-                        neg_keywords.extend(keys)
-            
+                    neg_keywords.extend(keys)
+
             if neg_keywords:
                 valid_keys = [re.escape(k) for k in neg_keywords if k.strip()]
-                if not valid_keys:
-                    st.info("该维度暂无有效的负面关键词。")
-                else:
+                if valid_keys:
                     search_pattern = '|'.join(valid_keys)
-                    vocal_df = sub_df[(sub_df['Rating'] <= 3) & (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))][['Rating', 's_text']].drop_duplicates().head(10)
+                    
+                    # 筛选逻辑：取消 .head() 限制，获取全部匹配项
+                    vocal_df = sub_df[
+                        (sub_df['Rating'] <= 3) & 
+                        (sub_df['s_text'].str.contains(search_pattern, na=False, flags=re.IGNORECASE))
+                    ].copy()
+                    
+                    # 去重并按评分升序排列（先看差评）
+                    vocal_df = vocal_df.drop_duplicates(subset=['s_text'])
+                    vocal_df = vocal_df.sort_values(by='Rating', ascending=True)
+
                     if not vocal_df.empty:
-                        st.warning(f"以下是用户在【{target_dim}】维度的真实痛点原声：")
-                        for i, (_, row) in enumerate(vocal_df.iterrows()):
-                            st.markdown(f"**[{row['Rating']}⭐]** {row['s_text']}")
-                            st.divider()
+                        total_count = len(vocal_df)
+                        st.warning(f"已为您检索到关于【{target_dim}】的 {total_count} 条真实痛点原声：")
+                        
+                        # 使用带高度的容器展示全量内容，防止页面过长
+                        container_height = 500 if total_count > 5 else None
+                        
+                        with st.container(height=container_height):
+                            for i, (_, row) in enumerate(vocal_df.iterrows()):
+                                text = row['s_text']
+                                
+                                # 高亮逻辑
+                                sorted_keywords = sorted(list(set(neg_keywords)), key=len, reverse=True)
+                                for word in sorted_keywords:
+                                    if word and word.lower() in text.lower():
+                                        text = re.sub(f"({re.escape(word)})", r"<span style='color:#ED4337;font-weight:bold;background-color:#FFF0F0;padding:0 2px;border-radius:2px;'>\1</span>", text, flags=re.IGNORECASE)
+                                
+                                st.markdown(f"**[{row['Rating']}⭐]** {text}", unsafe_allow_html=True)
+                                if i < total_count - 1:
+                                    st.divider()
                     else:
-                        st.info("该维度下暂未捕捉到高代表性的负面原声评价。")
-            else:
-                st.write("该维度暂无定义的负面关键词。")
+                        st.info(f"该维度下暂未捕捉到匹配关键词的负面评价。")
 
         st.markdown("---")
         
@@ -1136,6 +1158,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
