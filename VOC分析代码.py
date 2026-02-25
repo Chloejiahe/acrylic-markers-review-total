@@ -918,8 +918,7 @@ if not df.empty:
             root_cause = dim_info['痛点分布'] if '痛点分布' in dim_info else "暂无根因分析"
             dim_score = dim_info['维度评分'] if '维度评分' in dim_info else 0
             
-            # 展示核心投诉根因卡片（参考竞品板块样式）
-            cause_color = "#c0392b" if dim_score < 3.5 else "#d35400"
+           # 核心投诉根因简洁版卡片
             st.markdown(f"""
                 <div style="padding:12px 15px; border-radius:10px; border-left: 8px solid {cause_color}; 
                             background-color: #fff5f5; border-top:1px solid #eee; border-right:1px solid #eee;
@@ -1178,6 +1177,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
