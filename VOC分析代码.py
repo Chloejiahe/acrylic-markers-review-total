@@ -1226,43 +1226,52 @@ if not df.empty:
                     # A. 提取该人群子集
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
                     
-                    # B. 调用分析函数
+                    # B. 调用分析函数计算该人群专属的“机会指数”表
                     role_analysis_res, _ = analyze_sentiments(role_sub)
                     
-                    # --- 【关键：先确定维度，再进行诊断】 ---
-                    # 只有确保这一步先执行，role_specific_dims 才有定义
+                    # --- 【重要：修复变量定义顺序，防止 NameError】 ---
                     if (role_analysis_res is not None) and (not role_analysis_res.empty):
                         role_specific_dims = role_analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
                     else:
-                        role_specific_dims = global_top_3 # 使用全局维度作为保底
-                    
-                    # --- C. 数据量诊断工具 ---
-                    suffix = f"role_{i}_{sub_name}" # 确保 key 唯一
+                        role_specific_dims = global_top_3 
+
+                    # --- C. 数据量诊断工具 (根据截图表结构精准修复) ---
+                    suffix = f"role_{i}_{sub_name}" 
                     with st.expander(f"📊 样本诊断：{role} 的维度覆盖情况", expanded=False):
-                        # 自动寻找正确的数量列名
-                        possible_count_cols = ['提及频次', '样本量', '提及数', '频次', 'count']
-                        actual_count_col = next((c for c in possible_count_cols if (role_analysis_res is not None and c in role_analysis_res.columns)), None)
+                        # 根据你的截图，列名分别是 '亮点' 和 '痛点'
+                        pos_col, neg_col = '亮点', '痛点'
                         
-                        # 此时 len(role_specific_dims) 绝对不会报 NameError
                         diag_cols = st.columns(len(role_specific_dims) + 1)
                         diag_cols[0].metric("人群总数", len(role_sub))
                         
                         for idx, d_name in enumerate(role_specific_dims):
                             if (role_analysis_res is not None) and (not role_analysis_res.empty):
                                 dim_stats = role_analysis_res[role_analysis_res['维度'] == d_name]
-                                if not dim_stats.empty and actual_count_col:
-                                    count_val = dim_stats.iloc[0][actual_count_col]
-                                    diag_cols[idx+1].metric(f"{d_name}", f"{int(count_val)}条")
+                                
+                                # 检查“亮点”和“痛点”列是否存在于返回的 DataFrame 中
+                                if not dim_stats.empty and pos_col in dim_stats.columns and neg_col in dim_stats.columns:
+                                    # 核心修复：总数 = 亮点数量 + 痛点数量
+                                    p_val = dim_stats.iloc[0][pos_col]
+                                    n_val = dim_stats.iloc[0][neg_col]
+                                    # 转换为整型并加总
+                                    total_count = int(p_val if pd.notna(p_val) else 0) + int(n_val if pd.notna(n_val) else 0)
+                                    
+                                    diag_cols[idx+1].metric(f"{d_name}", f"{total_count}条")
                                 else:
-                                    diag_cols[idx+1].metric(f"{d_name}", "0条", delta="-无统计")
+                                    # 如果列名不对，尝试找 fallback 统计列，否则报 0
+                                    diag_cols[idx+1].metric(f"{d_name}", "0条", delta="-列名不匹配", delta_color="inverse")
                             else:
-                                diag_cols[idx+1].metric(f"{d_name}", "0条", delta="-无分析")
+                                diag_cols[idx+1].metric(f"{d_name}", "0条", delta="-无分析数据")
 
                         if st.checkbox("查看底层统计表(调试用)", key=f"debug_{suffix}"):
                             st.dataframe(role_analysis_res if role_analysis_res is not None else "无数据")
 
-                    # D. 绘图
+                        if len(role_sub) < 10:
+                            st.warning("⚠️ 该群体样本量过小，可能会导致气泡图无法显示。")
+                    
+                    # D. 绘图（使用修正后的维度列表）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
