@@ -925,7 +925,7 @@ if not df.empty:
         st.markdown("🔍 **竞品弱点靶向追踪 (Opportunity Analysis)**")
         with st.expander("📊 如何解读机会指数？"):
             st.markdown(f"""
-              **机会指数 = 痛点频次 × 评分落差** *(当前子类目全站基准分：**{global_avg_rating:.2f}** ⭐)*
+              **机会指数 = 痛点频次 × 评分落差** *(当前子类目全站基准分：**{avg_star}** ⭐)*
               * **计算方式**：
               1. **评分落差**：该维度的平均得分与全站基准分的差距。落差越大，代表竞品在该维度的“失分”越严重。
               2. **痛点频次**：用户对该维度负面评价的提及次数。次数越多，代表受影响的用户基数越大。
@@ -1198,6 +1198,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
