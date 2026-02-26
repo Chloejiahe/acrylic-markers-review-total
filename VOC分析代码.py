@@ -675,36 +675,50 @@ def extract_advanced_features(df):
 @st.cache_data
 def analyze_sentiments(df_sub):
     results = []
-    # 获取全站（当前子类目）的真实平均分，作为基准
+    # 1. 获取全站真实平均分作为基准
     global_avg_rating = df_sub['Rating'].mean() if not df_sub.empty else 0
-    total_reviews_count = len(df_sub)
     
     for category, sub_dict in FEATURE_DIC.items():
         pos_count, neg_count = 0, 0
         hit_details = []
         all_matched_ratings = []
+        
+        # 准备负面模式和正面模式
+        # 关键逻辑：优先处理负面标签，避免 "not good" 命中 "good"
+        neg_tags = {k: v for k, v in sub_dict.items() if '负面' in k or '不满' in k}
+        pos_tags = {k: v for k, v in sub_dict.items() if '正面' in k or '好评' in k}
 
-        for tag, keywords in sub_dict.items():
+        # --- 先跑负面匹配 ---
+        neg_indices = set() # 记录负面评论的索引，防止被正面逻辑重复抓取
+        for tag, keywords in neg_tags.items():
             pattern = '|'.join([re.escape(k) for k in keywords])
             mask = df_sub['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
             matched_df = df_sub[mask]
             
             if not matched_df.empty:
+                neg_count += len(matched_df)
+                neg_indices.update(matched_df.index.tolist())
                 all_matched_ratings.extend(matched_df['Rating'].tolist())
-                if '负面' in tag or '不满' in tag:
-                    neg_count += len(matched_df)
-                    hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)}次)")
-                elif '正面' in tag or '好评' in tag:
-                    pos_count += len(matched_df)
+                hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)}次)")
+
+        # --- 再跑正面匹配（排除掉已经是负面的索引） ---
+        remaining_df = df_sub.drop(index=list(neg_indices)) if neg_indices else df_sub
+        
+        for tag, keywords in pos_tags.items():
+            pattern = '|'.join([re.escape(k) for k in keywords])
+            mask = remaining_df['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
+            matched_df = remaining_df[mask]
+            
+            if not matched_df.empty:
+                pos_count += len(matched_df)
+                all_matched_ratings.extend(matched_df['Rating'].tolist())
 
         # 指标计算
         dim_vocal_total = pos_count + neg_count
         dim_avg_rating = np.mean(all_matched_ratings) if all_matched_ratings else 0
         
-        # --- 新的算法逻辑：影响力指数 ---
+        # 算法：频次 * 落差
         rating_gap = max(global_avg_rating - dim_avg_rating, 0)
-        
-        # 最终算法：频次 * 落差 (这非常符合商业改进逻辑：先解决影响面大且杀伤力强的问题)
         impact_index = round(neg_count * rating_gap, 2)
 
         results.append({
@@ -717,7 +731,8 @@ def analyze_sentiments(df_sub):
             "痛点分布": ", ".join(hit_details) if hit_details else "无"
         })
         
-    return pd.DataFrame(results).sort_values("机会指数", ascending=False)
+    # 同时返回 DataFrame 和 基准分，解决 NameError
+    return pd.DataFrame(results).sort_values("机会指数", ascending=False), global_avg_rating
 
 # 【关键修复】将原先嵌套在内部的缓存函数提到全局，防止 Streamlit 每次重绘时重新定义导致缓存失效
 @st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
@@ -837,14 +852,18 @@ if not df.empty:
         """, unsafe_allow_html=True)
         
         sub_df = filtered[filtered['sub_type'] == sub_name]
-        analysis_res = analyze_sentiments(sub_df)
+        
+        # 【关键修复】使用元组拆包接收返回值，解决 NameError
+        analysis_res, global_avg_rating = analyze_sentiments(sub_df)
         
         # 顶部指标卡
         m1, m2, m3, m4 = st.columns(4)
         total_pos = analysis_res["亮点"].sum()
         total_neg = analysis_res["痛点"].sum()
         health_rate = round(total_pos / (total_pos + total_neg) * 100) if (total_pos + total_neg) > 0 else 0
-        avg_star = round(sub_df['Rating'].mean(), 2) if 'Rating' in sub_df.columns else 0
+        
+        # 统一使用 global_avg_rating
+        avg_star = round(global_avg_rating, 2)
         
         m1.metric("亮点总提及", total_pos)
         m2.metric("痛点总提及", total_neg, delta=f"-{total_neg}", delta_color="inverse")
@@ -936,7 +955,8 @@ if not df.empty:
             cols = st.columns(3)
             for idx, (_, row) in enumerate(pain_df.iterrows()):
                 with cols[idx]:
-                    color = "#c0392b" if row['维度评分'] < 3.5 else "#d35400"
+                    # 动态颜色逻辑：评分低于全站基准则为深红
+                    color = "#c0392b" if row['维度评分'] < avg_star else "#d35400"
                     st.markdown(f"""
                     <div style="padding:15px; border-radius:10px; border-left: 8px solid {color}; 
                                  background-color: #fdfefe; border-top:1px solid #eee; border-right:1px solid #eee;
@@ -953,8 +973,8 @@ if not df.empty:
                     </div>
                     """, unsafe_allow_html=True)
         else:
-            st.success("✨ 所有维度表现良好，满意度均在 60% 以上！")
-
+            st.success("✨ 所有维度表现良好，满意度均在基准线以上！")
+            
         # 词云
         st.markdown("---")
         st.markdown("### ☁️ 原声情感对比词云")
@@ -1197,6 +1217,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
