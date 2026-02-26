@@ -1230,33 +1230,38 @@ if not df.empty:
                     # 假设 analyze_sentiments 返回 (analysis_res_df, _)
                     role_analysis_res, _ = analyze_sentiments(role_sub)
                     
-                    # C. 筛选该人群机会指数前三的维度
-                    if not role_analysis_res.empty:
-                        role_specific_dims = role_analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
-                    else:
-                        role_specific_dims = global_top_3 
-
-                    # --- 🔍 新增：数据量诊断工具 ---
+                    # --- C. 新增：数据量诊断工具（修复版） ---
                     with st.expander(f"📊 样本诊断：{role} 的维度覆盖情况", expanded=False):
+                        # 自动寻找正确的数量列名
+                        possible_count_cols = ['提及频次', '样本量', '提及数', '频次', 'count']
+                        actual_count_col = next((c for c in possible_count_cols if c in role_analysis_res.columns), None)
+                        
                         diag_cols = st.columns(len(role_specific_dims) + 1)
                         diag_cols[0].metric("人群总数", len(role_sub))
                         
                         for idx, d_name in enumerate(role_specific_dims):
-                            # 统计该维度下非空的评分数量（假设评分存在以维度名命名的列，或通过分析结果匹配）
-                            # 这里根据一般逻辑，检查该维度在 role_analysis_res 中的 '提及频次' 或 '样本量'
                             dim_stats = role_analysis_res[role_analysis_res['维度'] == d_name]
-                            if not dim_stats.empty:
-                                count = dim_stats.iloc[0].get('提及频次', 0) # 或者用 '样本量'
-                                diag_cols[idx+1].metric(f"{d_name}", f"{int(count)}条")
+                            
+                            if not dim_stats.empty and actual_count_col:
+                                # 动态获取列值
+                                count_val = dim_stats.iloc[0][actual_count_col]
+                                diag_cols[idx+1].metric(f"{d_name}", f"{int(count_val)}条")
                             else:
-                                diag_cols[idx+1].metric(f"{d_name}", "0条", delta="-缺失")
+                                # 如果完全找不到数据或列名
+                                reason = "列名不符" if not actual_count_col else "无匹配"
+                                diag_cols[idx+1].metric(f"{d_name}", "0条", delta=f"-{reason}", delta_color="inverse")
+
+                        # 额外增加底层数据查看，防止逻辑再次失效
+                        if st.checkbox("查看底层统计表(调试用)", key=f"debug_{suffix}"):
+                            st.dataframe(role_analysis_res.head(5))
 
                         if len(role_sub) < 10:
-                            st.warning("⚠️ 该群体样本量过小，可能会导致气泡图无法显示（需要至少2-3个SKU同时具有这三个维度的分值）。")
-                    # ------------------------------
+                            st.warning("⚠️ 该群体样本量过小，可能会导致气泡图无法显示。")
+                    # -------------------------------------------
                     
                     # D. 绘图
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
