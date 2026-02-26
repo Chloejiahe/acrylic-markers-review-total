@@ -696,10 +696,14 @@ def analyze_sentiments(df_sub):
             matched_df = df_sub[mask]
             
             if not matched_df.empty:
+                # 原有逻辑：统计痛点提及频次（保持不变）
                 neg_count += len(matched_df)
                 neg_indices.update(matched_df.index.tolist())
-                all_matched_ratings.extend(matched_df['Rating'].tolist())
                 hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)}次)")
+                
+                # 修改后的逻辑：仅当情感为负面/中性时，评分才参与计算
+                valid_neg_mask = matched_df['s_pol'] <= 0
+                all_matched_ratings.extend(matched_df[valid_neg_mask]['Rating'].tolist())
 
         # --- 再跑正面匹配（排除掉已经是负面的索引） ---
         remaining_df = df_sub.drop(index=list(neg_indices)) if neg_indices else df_sub
@@ -710,11 +714,16 @@ def analyze_sentiments(df_sub):
             matched_df = remaining_df[mask]
             
             if not matched_df.empty:
+                # 原有逻辑：统计亮点提及频次（保持不变）
                 pos_count += len(matched_df)
-                all_matched_ratings.extend(matched_df['Rating'].tolist())
+                
+                # 修改后的逻辑：仅当情感为正面/中性时，评分才参与计算
+                valid_pos_mask = matched_df['s_pol'] >= 0
+                all_matched_ratings.extend(matched_df[valid_pos_mask]['Rating'].tolist())
 
         # 指标计算
         dim_vocal_total = pos_count + neg_count
+        # 基于清洗后的评分池计算平均分
         dim_avg_rating = np.mean(all_matched_ratings) if all_matched_ratings else 0
         
         # 算法：频次 * 落差
@@ -733,16 +742,10 @@ def analyze_sentiments(df_sub):
         
     # 同时返回 DataFrame 和 基准分，解决 NameError
     return pd.DataFrame(results).sort_values("机会指数", ascending=False), global_avg_rating
-
+    
 # 【关键修复】将原先嵌套在内部的缓存函数提到全局，防止 Streamlit 每次重绘时重新定义导致缓存失效
 @st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
 def prepare_chart_data(data_source_id, _data_source, dims):
-    """
-    该函数负责最耗时的正则匹配计算。
-    data_source_id: 用于标识数据集（因为缓存不方便直接哈希大型DF）
-    _data_source: 加下划线表示不监控这个参数的变化，手动通过 ID 识别
-    dims: 参与计算的三个维度
-    """
     d_x, d_y, d_b = dims[0], dims[1], dims[2]
     
     def get_metric_inner(target_df, dimension):
@@ -761,12 +764,21 @@ def prepare_chart_data(data_source_id, _data_source, dims):
             matched_df = target_df[mask]
             
             if not matched_df.empty:
-                all_matched_ratings.extend(matched_df['Rating'].tolist())
+                # --- 核心修复部分 ---
                 if '负面' in tag or '不满' in tag:
+                    # 负面标签：只取情感确实负面/中性的评分
+                    eff_ratings = matched_df[matched_df['s_pol'] <= 0]['Rating'].tolist()
+                    all_matched_ratings.extend(eff_ratings)
+                    
                     neg_count += len(matched_df)
                     hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)})")
                     neg_texts.extend(matched_df['s_text'].unique().tolist())
+                
                 elif '正面' in tag or '好评' in tag:
+                    # 正面标签：只取情感确实正面/中性的评分
+                    eff_ratings = matched_df[matched_df['s_pol'] >= 0]['Rating'].tolist()
+                    all_matched_ratings.extend(eff_ratings)
+                    
                     pos_count += len(matched_df)
 
         if not all_matched_ratings: return None, 0, 0, 0, "未提及", "暂无痛点原声"
@@ -1217,6 +1229,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
