@@ -1098,28 +1098,115 @@ if not df.empty:
                 res_df['score_y'] = res_df['score_y'].fillna(0)
                 res_df['score_b'] = res_df['score_b'].fillna(0)
                 # 确保气泡大小不为负数（以防万一）
-                res_df['display_size'] = res_df['score_b'].apply(lambda x: max(x, 0) * 10)
+                res_df['display_size'] = res_df['score_b'].apply(lambda x: max(x, 0) * 10)没问题，我已经根据 def draw_sku_bubble_chart 的缩进基准（12个空格），对你提供的整个逻辑块进行了严格的缩进对齐。
 
-                # --- 1. 气泡图绘制 ---
+此外，我还在 get_metric_with_reason 内部加入了空值保护逻辑，防止评分缺失导致气泡图再次崩溃。
+
+Python
+            def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
+                valid_local = [d for d in local_dims if d and d != "未提及"]
+                final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
+                d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
+                
+                plot_data = []
+                all_skus = data_source['sku_spec'].unique()
+                
+                for sku in all_skus:
+                    sku_df = data_source[data_source['sku_spec'] == sku]
+                    
+                    def get_metric_with_reason(target_df, dimension):
+                        if dimension == "其他": return 3.0, 0, "N/A"
+                        
+                        # 获取该维度下所有的细分关键词
+                        dim_rules = FEATURE_DIC.get(dimension, {})
+                        if not dim_rules: return None, 0, ""
+
+                        all_keywords = []
+                        for k_list in dim_rules.values():
+                            all_keywords.extend(k_list)
+                        
+                        pat = '|'.join([re.escape(k) for k in all_keywords if k.strip()])
+                        matched = target_df[target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)]
+                        
+                        if matched.empty: return None, 0, "未提及"
+                        
+                        # --- 核心逻辑修改：结构化统计 + 原文保留 ---
+                        neg_matched = matched[matched['Rating'] <= 3].sort_values("Rating")
+                        
+                        if not neg_matched.empty:
+                            # 1. 统计 FEATURE_DIC 中的细分痛点
+                            tag_stats = {}
+                            for tag, keywords in dim_rules.items():
+                                if '负面' in tag:
+                                    tag_name = tag.split('-')[-1]
+                                    tag_pat = '|'.join([re.escape(k) for k in keywords])
+                                    count = neg_matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE).sum()
+                                    if count > 0:
+                                        tag_stats[tag_name] = count
+                            
+                            # 2. 格式化痛点头部
+                            if tag_stats:
+                                sorted_tags = sorted(tag_stats.items(), key=lambda x: x[1], reverse=True)
+                                header = "【核心痛点统计】：\n" + " | ".join([f"{t}({c}次)" for t, c in sorted_tags])
+                            else:
+                                header = "【核心痛点】：存在低分评价但未匹配到具体标签"
+
+                            # 3. 抓取所有唯一的差评原文
+                            all_neg_texts = neg_matched['s_text'].unique().tolist()
+                            raw_feedback = "\n\n---\n\n【详细评价原文】：\n" + "\n\n".join(all_neg_texts)
+                            
+                            # 最终合并：统计在前，原文在后
+                            reason = header + raw_feedback
+                        else:
+                            reason = "评价较正面"
+                        
+                        return matched['Rating'].mean(), len(matched), reason
+                    
+                    # 获取指标数据
+                    sc_x, cnt_x, re_x = get_metric_with_reason(sku_df, d_x)
+                    sc_y, cnt_y, re_y = get_metric_with_reason(sku_df, d_y)
+                    sc_b, cnt_b, re_b = get_metric_with_reason(sku_df, d_b)
+                    
+                    if any(v is not None for v in [sc_x, sc_y, sc_b]):
+                        parts = str(sku).split('_')
+                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
+                        # 增加保底值 3.0，防止 Plotly 因 None 绘图失败
+                        v_x, v_y, v_b = (sc_x or 3.0), (sc_y or 3.0), (sc_b or 3.0)
+                        
+                        plot_data.append({
+                            'full_sku': str(sku),
+                            'short_name': short_name,
+                            'score_x': v_x, 'score_y': v_y, 'score_b_val': v_b,
+                            'total_sum': v_x + v_y + v_b,
+                            'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
+                            'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
+                        })
+                
+                res_df = pd.DataFrame(plot_data)
+                if res_df.empty:
+                    st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
+                    return
+
+                # --- 1. 绘制气泡图 ---
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
-                    x=res_df['score_x'], 
-                    y=res_df['score_y'], 
-                    mode='markers+text',
-                    text=res_df['short_name'], 
-                    textposition="top center",
+                    x=res_df['score_x'], y=res_df['score_y'], mode='markers+text',
+                    text=res_df['short_name'], textposition="top center",
+                    customdata=res_df[['full_sku', 'score_b_val', 'total_sum']],
                     marker=dict(
-                        # 使用修复后的列
-                        size=res_df['display_size'], 
-                        color=res_df['total_impact'],
-                        colorscale='Reds', 
-                        showscale=True, 
-                        reversescale=True,
-                        colorbar=dict(title="机会指数")
+                        size=res_df['score_b_val'] * 12, 
+                        color=res_df['total_sum'], 
+                        colorscale='RdYlGn', showscale=True,
+                        colorbar=dict(title="综合总分"),
+                        line=dict(width=1, color='DarkSlateGrey')
                     ),
-                    hovertemplate = "<b>%{text}</b><br>X轴分: %{x:.2f}<br>Y轴分: %{y:.2f}<br>机会指数: %{marker.color}<extra></extra>"
+                    hovertemplate = (
+                        f"<b>%{{text}}</b><br>{d_x}: %{{x:.2f}}<br>{d_y}: %{{y:.2f}}<br>"
+                        f"{d_b}: %{{customdata[1]:.2f}}<br><b>总分: %{{customdata[2]:.2f}}</b><extra></extra>"
+                    )
                 ))
-                st.plotly_chart(fig, use_container_width=True)
+                fig.update_layout(title=f"{title_label}：维度表现分布", height=450, xaxis_title=f"{d_x} 评分", yaxis_title=f"{d_y} 评分")
+                st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
                 # --- 2. 交互式卡片下钻 ---
                 st.markdown(f"##### 🎯 {title_label} - 深度痛点溯源")
