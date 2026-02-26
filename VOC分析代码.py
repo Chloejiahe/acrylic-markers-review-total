@@ -1114,28 +1114,29 @@ if not df.empty:
         st.markdown("#### 🚀 核心痛点维度评分矩阵 (Dynamic Persona-Pain Matrix)")
         
         with st.container():
-            st.info("**💡 矩阵说明：** 通过切换下方【身份标签】，可以发现不同人群对产品的不满点是否存在错位。")
+            st.info("**💡 矩阵说明：** 系统已自动根据各人群数据的【机会指数】筛选其最关注的前三维度进行绘图。")
 
-        # 确定全局前三维度
+        # 1. 确定全局前三维度（作为全量数据的默认展示）
         global_top_3 = analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
         while len(global_top_3) < 3:
             global_top_3.append("其他")
 
         if not analysis_res.empty:
             # =================================================================
-            # 绘图展示层：只负责渲染界面，由于它不耗时，保留在这里是安全的
+            # 绘图展示层闭包
             # =================================================================
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                     valid_local = [d for d in local_dims if d and d != "未提及"]
+                    # 优先级：人群机会指数Top3 > 全局Top3补位
                     final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
                     d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
 
-                    # 【关键点】从缓存获取计算结果
-                    data_id = f"{suffix}_{len(data_source)}" # 生成唯一ID触发缓存
+                    # 获取绘图数据
+                    data_id = f"{suffix}_{len(data_source)}" 
                     res_df = prepare_chart_data(data_id, data_source, final_dims)
 
                     if res_df.empty:
-                            st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
+                            st.warning(f"⚠️ {title_label} 匹配维度下数据量过小，无法生成气泡图")
                             return
 
                     # --- 1. 绘制气泡图 ---
@@ -1156,7 +1157,7 @@ if not df.empty:
                                     f"{d_b}: %{{customdata[1]:.2f}}<br><b>总分: %{{customdata[2]:.2f}}</b><extra></extra>"
                             )
                     ))
-                    fig.update_layout(title=f"{title_label}：维度表现分布", height=450, xaxis_title=f"{d_x} 评分", yaxis_title=f"{d_y} 评分")
+                    fig.update_layout(title=f"{title_label}：维度表现矩阵 (基于机会指数Top3)", height=450, xaxis_title=f"{d_x} 评分", yaxis_title=f"{d_y} 评分")
                     st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
                     # --- 2. 交互式卡片下钻 ---
@@ -1210,25 +1211,34 @@ if not df.empty:
                             st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # =================================================================
-            # 渲染逻辑
+            # 渲染逻辑：核心改进部分
             # =================================================================
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             
+            # Tab 0: 总体
             with tab_list[0]:
                 draw_sku_bubble_chart(sub_df, "全量数据", f"total_{sub_name}", global_top_3)
             
+            # Tab 1-3: 不同身份人群
             for i, role in enumerate(top_roles):
                 with tab_list[i+1]:
+                    # A. 提取该人群子集
                     role_sub = sub_df[sub_df['feat_User_Role'] == role]
-                    role_neg_text = " ".join(role_sub[role_sub['s_pol'] < 0]['s_text'].astype(str).tolist())
-                    dim_counts = {}
-                    for dim, mapping in FEATURE_DIC.items():
-                        all_keys = [k for sub in mapping.values() for k in sub]
-                        count = sum(1 for k in all_keys if k.lower() in role_neg_text.lower())
-                        if count > 0: dim_counts[dim] = count
-                    role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
+                    
+                    # B. 【关键】调用分析函数计算该人群专属的“机会指数”表
+                    # 假设 analyze_sentiments 返回 (analysis_res_df, _)
+                    role_analysis_res, _ = analyze_sentiments(role_sub)
+                    
+                    # C. 筛选该人群机会指数前三的维度
+                    if not role_analysis_res.empty:
+                        role_specific_dims = role_analysis_res.sort_values("机会指数", ascending=False)['维度'].tolist()[:3]
+                    else:
+                        role_specific_dims = global_top_3 # 保底
+                    
+                    # D. 绘图
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
