@@ -1119,28 +1119,31 @@ if not df.empty:
                 st.plotly_chart(fig, use_container_width=True, key=f"bubble_{suffix}")
 
                 # --- 2. 交互式卡片下钻 ---
-                st.markdown(f"##### 🎯 {title_label} - 深度痛点溯源")
+                st.markdown(f"##### 🎯 {title_label} - 维度表现详情")
                 selected_name = st.selectbox("选择产品查看维度详情", res_df['short_name'].unique(), key=f"sel_{suffix}")
                 row = res_df[res_df['short_name'] == selected_name].iloc[0]
                 cols = st.columns(3)
-                display_map = [(d_x, 'score_x', 'impact_x', 'reason_x', 'vocal_x', 'cnt_x'),
-                               (d_y, 'score_y', 'impact_y', 'reason_y', 'vocal_y', 'cnt_y'),
-                               (d_b, 'score_b', 'impact_b', 'reason_b', 'vocal_b', 'cnt_b')]
+                
+                # 重新定义映射，移除 impact，修正 score_b_val
+                display_map = [(d_x, 'score_x', 'reason_x', 'reason_x', 'cnt_x'),
+                               (d_y, 'score_y', 'reason_y', 'reason_y', 'cnt_y'),
+                               (d_b, 'score_b_val', 'reason_b', 'reason_b', 'cnt_b')]
 
-                for i, (name, s_col, im_col, r_col, v_col, c_col) in enumerate(display_map):
+                for i, (name, s_col, r_col, v_col, c_col) in enumerate(display_map):
                     with cols[i]:
-                        impact = row[im_col]
-                        card_color = "#c0392b" if impact > 15 else "#d35400" if impact > 5 else "#27ae60"
+                        score_val = row[s_col]
+                        # 颜色由评分决定：低于3.5偏红，高于4.2偏绿
+                        card_color = "#c0392b" if score_val < 3.5 else "#27ae60" if score_val > 4.2 else "#d35400"
                         st.markdown(f"""
-                            <div style="padding:15px; border-radius:10px; border-left: 8px solid {card_color}; background-color: #fdfefe; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); min-height: 220px;">
-                                <div style="display:flex; justify-content:space-between;">
+                            <div style="padding:15px; border-radius:10px; border-left: 8px solid {card_color}; background-color: #fdfefe; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); min-height: 200px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <h4 style="margin:0; font-size:16px;">{name}</h4>
-                                    <span style="color:{card_color}; font-weight:bold;">{row[s_col]:.2f} ⭐</span>
+                                    <span style="color:{card_color}; font-weight:bold; font-size:16px;">{score_val:.2f} ⭐</span>
                                 </div>
-                                <p style="color:gray; font-size:11px; margin-top:5px;">样本数: {int(row[c_col])} | <b>机会指数: {impact}</b></p>
+                                <p style="color:gray; font-size:11px; margin-top:5px;">样本数: {int(row[c_col])}</p>
                                 <hr style="margin:10px 0; border:0; border-top:1px solid #eee;">
-                                <p style="font-size:13px; margin-bottom:5px;"><b>命中负面标签：</b></p>
-                                <p style="font-size:13px; color:#c0392b; line-height:1.4;">{row[r_col]}</p>
+                                <p style="font-size:13px; margin-bottom:5px;"><b>痛点统计：</b></p>
+                                <p style="font-size:12px; color:#555; line-height:1.4;">{row[r_col]}</p>
                             </div>
                         """, unsafe_allow_html=True)
                         with st.expander(f"💬 查看 {name} 原声"):
@@ -1175,6 +1178,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
