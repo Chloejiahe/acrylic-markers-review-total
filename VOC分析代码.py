@@ -1018,96 +1018,6 @@ if not df.empty:
                 final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
                 d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
                 
-                global_ref_rating = data_source['Rating'].mean() if not data_source.empty else 0
-                plot_data = []
-                all_skus = data_source['sku_spec'].unique()
-                
-                for sku in all_skus:
-                    sku_df = data_source[data_source['sku_spec'] == sku]
-                    
-                    def get_metric_extended(target_df, dimension):
-                        if dimension == "其他": return 3.0, 0, 0, "N/A", "N/A"
-                        dim_rules = FEATURE_DIC.get(dimension, {})
-                        if not dim_rules: return None, 0, 0, "", ""
-
-                        all_keywords = [k for k_list in dim_rules.values() for k in k_list]
-                        pat = '|'.join([re.escape(k) for k in all_keywords if k.strip()])
-                        matched = target_df[target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)]
-                        
-                        if matched.empty: return None, 0, 0, "未提及", "未提及"
-                        
-                        # --- 修改逻辑：不再依赖 Rating <= 3，而是通过负面关键词命中判定痛点 ---
-                        neg_count = 0
-                        hit_tags = {}
-                        neg_text_list = []
-                        
-                        # 获取该维度下定义的所有负面/不满标签
-                        neg_tag_list = [t for t in dim_rules.keys() if '负面' in t or '不满' in t]
-                        
-                        for tag in neg_tag_list:
-                            keywords = dim_rules[tag]
-                            tag_pat = '|'.join([re.escape(k) for k in keywords])
-                            # 找出所有提到该负面标签的行（无视总分 Rating）
-                            is_neg = matched['s_text'].str.contains(tag_pat, na=False, flags=re.IGNORECASE)
-                            tag_match_count = is_neg.sum()
-                            
-                            if tag_match_count > 0:
-                                neg_count += tag_match_count
-                                hit_tags[tag.split('-')[-1]] = tag_match_count
-                                # 将这些包含具体负面词的原文存起来
-                                neg_text_list.extend(matched[is_neg]['s_text'].tolist())
-                        
-                        dim_score = matched['Rating'].mean()
-                        # 机会指数计算：即便平均分高，如果 neg_count 很大，impact 依然会提升
-                        gap = max(global_ref_rating - dim_score, 0)
-                        # 稍微调整公式，确保高分但有痛点的 SKU 也能被观察到（给 neg_count 基础权重）
-                        sku_impact = round(neg_count * (gap + 0.5), 2) 
-                        
-                        tag_summary = " | ".join([f"{t}({c})" for t, c in sorted(hit_tags.items(), key=lambda x: x[1], reverse=True)])
-                        reason = tag_summary if tag_summary else "该维度有提及但未命中具体负面词"
-                        
-                        # 原声回溯：去重并展示
-                        unique_neg_texts = list(set(neg_text_list))
-                        raw_vocal = "\n\n".join([f"• {t}" for t in unique_neg_texts]) if unique_neg_texts else "无明确负面关键词原声"
-                        
-                        return dim_score, len(matched), sku_impact, reason, raw_vocal
-
-                    res_x = get_metric_extended(sku_df, d_x)
-                    res_y = get_metric_extended(sku_df, d_y)
-                    res_b = get_metric_extended(sku_df, d_b)
-                    
-                    if res_x[0] is not None:
-                        parts = str(sku).split('_')
-                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
-                        plot_data.append({
-                            'full_sku': str(sku), 'short_name': short_name,
-                            'score_x': res_x[0], 'cnt_x': res_x[1], 'impact_x': res_x[2], 'reason_x': res_x[3], 'vocal_x': res_x[4],
-                            'score_y': res_y[0], 'cnt_y': res_y[1], 'impact_y': res_y[2], 'reason_y': res_y[3], 'vocal_y': res_y[4],
-                            'score_b': res_b[0], 'cnt_b': res_b[1], 'impact_b': res_b[2], 'reason_b': res_b[3], 'vocal_b': res_b[4],
-                            'total_impact': res_x[2] + res_y[2] + res_b[2]
-                        })
-
-                res_df = pd.DataFrame(plot_data)
-                if res_df.empty:
-                    st.warning("⚠️ 匹配数据量不足，无法生成矩阵")
-                    return
-
-                # --- 核心修复：处理空值和无效数值 ---
-                # 将评分列中的 None 转为 0，防止 Plotly 报错
-                res_df['score_x'] = res_df['score_x'].fillna(0)
-                res_df['score_y'] = res_df['score_y'].fillna(0)
-                res_df['score_b'] = res_df['score_b'].fillna(0)
-                # 确保气泡大小不为负数（以防万一）
-                res_df['display_size'] = res_df['score_b'].apply(lambda x: max(x, 0) * 10)没问题，我已经根据 def draw_sku_bubble_chart 的缩进基准（12个空格），对你提供的整个逻辑块进行了严格的缩进对齐。
-
-此外，我还在 get_metric_with_reason 内部加入了空值保护逻辑，防止评分缺失导致气泡图再次崩溃。
-
-Python
-            def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
-                valid_local = [d for d in local_dims if d and d != "未提及"]
-                final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
-                d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
-                
                 plot_data = []
                 all_skus = data_source['sku_spec'].unique()
                 
@@ -1265,6 +1175,7 @@ Python
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
