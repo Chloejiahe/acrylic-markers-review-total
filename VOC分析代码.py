@@ -1013,73 +1013,85 @@ if not df.empty:
 
         if not analysis_res.empty:
             # --- 核心绘图与表格函数定义 ---
+            # 1. 缓存计算层：将正则匹配逻辑提取出来并缓存
+            # =================================================================
+            @st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
+            def prepare_chart_data(data_source_id, _data_source, dims):
+                """
+                该函数负责最耗时的正则匹配计算。
+                data_source_id: 用于标识数据集（因为缓存不方便直接哈希大型DF）
+                _data_source: 加下划线表示不监控这个参数的变化，手动通过 ID 识别
+                dims: 参与计算的三个维度
+                """
+                d_x, d_y, d_b = dims[0], dims[1], dims[2]
+                
+                def get_metric_inner(target_df, dimension):
+                    if dimension == "其他": return 3.0, 0, 0, 0, "N/A", "N/A"
+                    sub_dict = FEATURE_DIC.get(dimension, {})
+                    if not sub_dict: return None, 0, 0, 0, "", ""
+                    
+                    pos_count, neg_count, all_matched_ratings = 0, 0, []
+                    hit_details, neg_texts = [], []
+
+                    for tag, keywords in sub_dict.items():
+                        clean_keys = [re.escape(k) for k in keywords if k.strip()]
+                        if not clean_keys: continue
+                        pat = '|'.join(clean_keys)
+                        mask = target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)
+                        matched_df = target_df[mask]
+                        
+                        if not matched_df.empty:
+                            all_matched_ratings.extend(matched_df['Rating'].tolist())
+                            if '负面' in tag or '不满' in tag:
+                                neg_count += len(matched_df)
+                                hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)})")
+                                neg_texts.extend(matched_df['s_text'].unique().tolist())
+                            elif '正面' in tag or '好评' in tag:
+                                pos_count += len(matched_df)
+
+                    if not all_matched_ratings: return None, 0, 0, 0, "未提及", "暂无痛点原声"
+                    avg_score = np.mean(all_matched_ratings)
+                    reason = " | ".join(hit_details) if hit_details else "无明显痛点标签"
+                    vocal = "\n\n---\n\n".join(list(set(neg_texts))) if neg_texts else "暂无痛点原声"
+                    return avg_score, len(all_matched_ratings), pos_count, neg_count, reason, vocal
+
+                plot_data = []
+                all_skus = _data_source['sku_spec'].unique()
+                
+                for sku in all_skus:
+                    sku_df = _data_source[_data_source['sku_spec'] == sku]
+                    sc_x, cnt_x, pc_x, nc_x, re_x, vo_x = get_metric_inner(sku_df, d_x)
+                    sc_y, cnt_y, pc_y, nc_y, re_y, vo_y = get_metric_inner(sku_df, d_y)
+                    sc_b, cnt_b, pc_b, nc_b, re_b, vo_b = get_metric_inner(sku_df, d_b)
+                    
+                    if any(v is not None for v in [sc_x, sc_y, sc_b]):
+                        parts = str(sku).split('_')
+                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
+                        plot_data.append({
+                            'full_sku': str(sku), 'short_name': short_name,
+                            'score_x': sc_x or 3.0, 'score_y': sc_y or 3.0, 'score_b_val': sc_b or 3.0,
+                            'total_sum': (sc_x or 3.0) + (sc_y or 3.0) + (sc_b or 3.0),
+                            'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
+                            'vocal_x': vo_x, 'vocal_y': vo_y, 'vocal_b': vo_b,
+                            'pos_cnt_x': pc_x, 'neg_cnt_x': nc_x,
+                            'pos_cnt_y': pc_y, 'neg_cnt_y': nc_y,
+                            'pos_cnt_b': pc_b, 'neg_cnt_b': nc_b,
+                            'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
+                        })
+                return pd.DataFrame(plot_data)
+
+            # =================================================================
+            # 2. 绘图展示层：只负责渲染界面，不负责正则计算
+            # =================================================================
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                     valid_local = [d for d in local_dims if d and d != "未提及"]
                     final_dims = (valid_local + [d for d in global_top_3 if d not in valid_local])[:3]
                     d_x, d_y, d_b = final_dims[0], final_dims[1], final_dims[2]
 
-                    # 定义指标获取函数
-                    def get_metric_with_reason(target_df, dimension):
-                            if dimension == "其他": return 3.0, 0, 0, 0, "N/A", "N/A"
-                            sub_dict = FEATURE_DIC.get(dimension, {})
-                            if not sub_dict: return None, 0, 0, 0, "", ""
-                            
-                            pos_count, neg_count, all_matched_ratings = 0, 0, []
-                            hit_details, neg_texts = [], []
+                    # 【关键点】从缓存获取计算结果
+                    data_id = f"{suffix}_{len(data_source)}" # 生成唯一ID触发缓存
+                    res_df = prepare_chart_data(data_id, data_source, final_dims)
 
-                            for tag, keywords in sub_dict.items():
-                                    clean_keys = [re.escape(k) for k in keywords if k.strip()]
-                                    if not clean_keys: continue
-                                    pat = '|'.join(clean_keys)
-                                    mask = target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)
-                                    matched_df = target_df[mask]
-                                    
-                                    if not matched_df.empty:
-                                            all_matched_ratings.extend(matched_df['Rating'].tolist())
-                                            if '负面' in tag or '不满' in tag:
-                                                    neg_count += len(matched_df)
-                                                    hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)})")
-                                                    neg_texts.extend(matched_df['s_text'].unique().tolist())
-                                            elif '正面' in tag or '好评' in tag:
-                                                    pos_count += len(matched_df)
-
-                            if not all_matched_ratings: return None, 0, 0, 0, "未提及", "暂无痛点原声"
-                            avg_score = np.mean(all_matched_ratings)
-                            reason = " | ".join(hit_details) if hit_details else "无明显痛点标签"
-                            vocal = "\n\n---\n\n".join(list(set(neg_texts))) if neg_texts else "暂无痛点原声"
-                            return avg_score, len(all_matched_ratings), pos_count, neg_count, reason, vocal
-
-                    plot_data = []
-                    all_skus = data_source['sku_spec'].unique()
-                    
-                    for sku in all_skus:
-                            sku_df = data_source[data_source['sku_spec'] == sku]
-                            
-                            # 1. 获取三个维度的完整数据 (解包 6 个值)
-                            sc_x, cnt_x, pc_x, nc_x, re_x, vo_x = get_metric_with_reason(sku_df, d_x)
-                            sc_y, cnt_y, pc_y, nc_y, re_y, vo_y = get_metric_with_reason(sku_df, d_y)
-                            sc_b, cnt_b, pc_b, nc_b, re_b, vo_b = get_metric_with_reason(sku_df, d_b)
-                            
-                            if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                                    parts = str(sku).split('_')
-                                    short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
-                                    v_x, v_y, v_b = (sc_x or 3.0), (sc_y or 3.0), (sc_b or 3.0)
-                                    
-                                    # 2. 将数据存入 plot_data
-                                    plot_data.append({
-                                            'full_sku': str(sku),
-                                            'short_name': short_name,
-                                            'score_x': v_x, 'score_y': v_y, 'score_b_val': v_b,
-                                            'total_sum': v_x + v_y + v_b,
-                                            'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
-                                            'vocal_x': vo_x, 'vocal_y': vo_y, 'vocal_b': vo_b,
-                                            'pos_cnt_x': pc_x, 'neg_cnt_x': nc_x,
-                                            'pos_cnt_y': pc_y, 'neg_cnt_y': nc_y,
-                                            'pos_cnt_b': pc_b, 'neg_cnt_b': nc_b,
-                                            'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
-                                    })
-                    
-                    res_df = pd.DataFrame(plot_data)
                     if res_df.empty:
                             st.warning(f"⚠️ {title_label} 匹配维度下数据量过小")
                             return
@@ -1145,7 +1157,7 @@ if not df.empty:
                                                             {row[v_col]}
                                                     </div>
                                             """, unsafe_allow_html=True)
-                            
+                                            
                     # --- 3. 参数明细 ---
                     with st.expander("📋 查看产品参数明细"):
                             table_rows = []
@@ -1155,7 +1167,9 @@ if not df.empty:
                                     table_rows.append({col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)})
                             st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
-            # --- 渲染逻辑 ---
+            # =================================================================
+            # 3. 渲染逻辑（保持不变）
+            # =================================================================
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
             
@@ -1173,8 +1187,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
-        else:
-            st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
