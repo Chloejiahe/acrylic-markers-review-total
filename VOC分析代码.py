@@ -436,7 +436,7 @@ FEATURE_DIC = {
         },
         '性价比': {
             '正面-性价比高': ['great value for the money', 'good value for the money', 'well worth the money', 'value for money', 'great value for money', 'worth my money', 'good deal for money', 'great value for your money', 'worth the extra money', 'excellent value for the money', 'nice value for the money', 'so worth my money', 'pretty expensive but totally worth the money', 'worth the money and time', 'really good value for your money', 'great value and totally worth the money','great product great price', 'very great price', 'good price', 'great price', 'worth the price', 'well worth the price', 'nice price', 'very reasonable', 'best price', 'amazing price point', 'price is on point', 'reasonable price', 'price is very reasonable', 'unbeatable price', 'fantastic value', 'steal', 'worth every bit', 'price was perfect', 'very affordable', 'very reasonably priced', 'bargain', 'deal','affordable', 'cheap', 'great deal', 'worth the money', 'great buy', 'reasonable price', 'cheaper than', 'alternative to','excellent value', 'amazing value','inexpensive','low price', 'great price point','money well spent', 'can\'t beat the price'],
-            '负面-价格昂贵': ['not worth the money', 'waste of money', 'total waste of money', 'complete waste of money', 'a waste of money', 'money waster', 'not worth your money', 'don\'t waste your money', 'waist of money', 'just a waste of money', 'not worth the time or money', 'sadly a huge waste of money', 'don\'t have money to waste on stuff that doesn\'t work', 'would be more with my time and money if I never got them at all','over priced', 'bit pricey', 'too pricey', 'quite pricey', 'little overpriced', 'premium price', 'higher price', 'pricey though', 'a little expensive', 'price is high', 'not worth the price','expensive', 'overpriced', 'not worth', 'pricey', 'costly', 'rip off', 'too much', 'waste of money','not worth it','over-priced'],
+            '负面-价格昂贵': ['not worth the money', 'waste of money', 'total waste of money', 'complete waste of money', 'a waste of money', 'money waster', 'not worth your money', 'don\'t waste your money', 'waist of money', 'just a waste of money', 'not worth the time or money', 'sadly a huge waste of money', 'don\'t have money to waste on stuff that doesn\'t work', 'would be more with my time and money if I never got them at all','over priced', 'bit pricey', 'too pricey', 'quite pricey', 'little overpriced', 'premium price', 'higher price', 'pricey though', 'a little expensive', 'price is high', 'not worth the price','expensive', 'overpriced', 'price they charge it's not worth', 'pricey', 'costly', 'rip off', 'waste of money','not worth it','over-priced'],
 
         },
         '配套与服务(色卡)': {
@@ -1197,6 +1197,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
