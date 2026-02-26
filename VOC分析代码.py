@@ -1146,14 +1146,14 @@ if not df.empty:
                                                     </div>
                                             """, unsafe_allow_html=True)
                             
-                # --- 3. 参数明细 ---
-                with st.expander("📋 查看产品参数明细"):
-                    table_rows = []
-                    columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
-                    for _, row in res_df.iterrows():
-                        parts = str(row['full_sku']).split('_')
-                        table_rows.append({col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)})
-                    st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+                    # --- 3. 参数明细 ---
+                    with st.expander("📋 查看产品参数明细"):
+                            table_rows = []
+                            columns_list = ["ASIN", "Brand", "ASP用于", "出墨方式", "线宽", "笔头类型", "支数", "包装材质", "包装方式"]
+                            for _, r in res_df.iterrows():
+                                    parts = str(r['full_sku']).split('_')
+                                    table_rows.append({col: (parts[i].strip() if i < len(parts) else "") for i, col in enumerate(columns_list)})
+                            st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # --- 渲染逻辑 ---
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
@@ -1175,6 +1175,7 @@ if not df.empty:
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
         else:
             st.info("🔍 当前筛选条件下暂无足够的机会维度分析数据。")
+
 
 
 
