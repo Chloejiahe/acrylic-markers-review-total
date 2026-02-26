@@ -657,7 +657,8 @@ def load_raw_data():
     return pd.concat(combined, ignore_index=True) if combined else pd.DataFrame()
     
 
-# --- 4. 核心分析逻辑 (保持不变) ---
+# --- 4. 核心分析逻辑 (已修改：全面增加缓存，并提取全局函数以防止缓存失效) ---
+@st.cache_data
 def extract_advanced_features(df):
     """为每一句评论打上画像、场景、动机标签"""
     processed_df = df.copy()
@@ -672,7 +673,7 @@ def extract_advanced_features(df):
         processed_df[clean_col_name] = processed_df['s_text'].apply(get_tag)
     return processed_df
 
-
+@st.cache_data
 def analyze_sentiments(df_sub):
     results = []
     # 获取全站（当前子类目）的真实平均分，作为基准
@@ -702,8 +703,6 @@ def analyze_sentiments(df_sub):
         dim_avg_rating = np.mean(all_matched_ratings) if all_matched_ratings else 0
         
         # --- 新的算法逻辑：影响力指数 ---
-        # 意义：如果维度得分低于大盘，说明它在拉低总分。差值越大，改进价值越高。
-        # 我们用 max(..., 0) 确保只有表现低于大盘的才产生正向“待改进指数”
         rating_gap = max(global_avg_rating - dim_avg_rating, 0)
         
         # 最终算法：频次 * 落差 (这非常符合商业改进逻辑：先解决影响面大且杀伤力强的问题)
@@ -715,11 +714,87 @@ def analyze_sentiments(df_sub):
             "痛点": neg_count,
             "维度评分": round(dim_avg_rating, 2),
             "满意度": round(pos_count / dim_vocal_total * 100, 1) if dim_vocal_total > 0 else 0,
-            "机会指数": impact_index,  # 换成了更客观的 Impact 算法
+            "机会指数": impact_index,  
             "痛点分布": ", ".join(hit_details) if hit_details else "无"
         })
         
     return pd.DataFrame(results).sort_values("机会指数", ascending=False)
+
+# 【关键修复】将原先嵌套在内部的缓存函数提到全局，防止 Streamlit 每次重绘时重新定义导致缓存失效
+@st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
+def prepare_chart_data(data_source_id, _data_source, dims):
+    """
+    该函数负责最耗时的正则匹配计算。
+    data_source_id: 用于标识数据集（因为缓存不方便直接哈希大型DF）
+    _data_source: 加下划线表示不监控这个参数的变化，手动通过 ID 识别
+    dims: 参与计算的三个维度
+    """
+    d_x, d_y, d_b = dims[0], dims[1], dims[2]
+    
+    def get_metric_inner(target_df, dimension):
+        if dimension == "其他": return 3.0, 0, 0, 0, "N/A", "N/A"
+        sub_dict = FEATURE_DIC.get(dimension, {})
+        if not sub_dict: return None, 0, 0, 0, "", ""
+        
+        pos_count, neg_count, all_matched_ratings = 0, 0, []
+        hit_details, neg_texts = [], []
+
+        for tag, keywords in sub_dict.items():
+            clean_keys = [re.escape(k) for k in keywords if k.strip()]
+            if not clean_keys: continue
+            pat = '|'.join(clean_keys)
+            mask = target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)
+            matched_df = target_df[mask]
+            
+            if not matched_df.empty:
+                all_matched_ratings.extend(matched_df['Rating'].tolist())
+                if '负面' in tag or '不满' in tag:
+                    neg_count += len(matched_df)
+                    hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)})")
+                    neg_texts.extend(matched_df['s_text'].unique().tolist())
+                elif '正面' in tag or '好评' in tag:
+                    pos_count += len(matched_df)
+
+        if not all_matched_ratings: return None, 0, 0, 0, "未提及", "暂无痛点原声"
+        avg_score = np.mean(all_matched_ratings)
+        reason = " | ".join(hit_details) if hit_details else "无明显痛点标签"
+        vocal = "\n\n---\n\n".join(list(set(neg_texts))) if neg_texts else "暂无痛点原声"
+        return avg_score, len(all_matched_ratings), pos_count, neg_count, reason, vocal
+
+    plot_data = []
+    all_skus = _data_source['sku_spec'].unique()
+    
+    for sku in all_skus:
+        sku_df = _data_source[_data_source['sku_spec'] == sku]
+        sc_x, cnt_x, pc_x, nc_x, re_x, vo_x = get_metric_inner(sku_df, d_x)
+        sc_y, cnt_y, pc_y, nc_y, re_y, vo_y = get_metric_inner(sku_df, d_y)
+        sc_b, cnt_b, pc_b, nc_b, re_b, vo_b = get_metric_inner(sku_df, d_b)
+        
+        if any(v is not None for v in [sc_x, sc_y, sc_b]):
+            parts = str(sku).split('_')
+            short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
+            plot_data.append({
+                'full_sku': str(sku), 'short_name': short_name,
+                'score_x': sc_x or 3.0, 'score_y': sc_y or 3.0, 'score_b_val': sc_b or 3.0,
+                'total_sum': (sc_x or 3.0) + (sc_y or 3.0) + (sc_b or 3.0),
+                'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
+                'vocal_x': vo_x, 'vocal_y': vo_y, 'vocal_b': vo_b,
+                'pos_cnt_x': pc_x, 'neg_cnt_x': nc_x,
+                'pos_cnt_y': pc_y, 'neg_cnt_y': nc_y,
+                'pos_cnt_b': pc_b, 'neg_cnt_b': nc_b,
+                'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
+            })
+    return pd.DataFrame(plot_data)
+
+# 【新增】为词云生成增加缓存，词云生成耗时极大，避免每次下拉框选择时重复计算
+@st.cache_data(show_spinner="生成词云中...")
+def generate_wordcloud_cached(text, colormap, random_state):
+    eng_stopwords = set(STOPWORDS)
+    custom_garbage = {'marker', 'markers', 'pen', 'pens', 'product', 'really', 'will', 'bought', 'set', 'get', 'much', 'even', 'color', 'paint', 'colors', 'work', 'good', 'great', 'love', 'used', 'using', 'actually', 'amazon', 'br'}
+    eng_stopwords.update(custom_garbage)
+    wc = WordCloud(width=500, height=400, background_color='white', colormap=colormap, max_words=50, stopwords=eng_stopwords, collocations=True, random_state=random_state).generate(text)
+    return wc.to_array()
+
 
 # --- 5. Streamlit 页面布局 ---
 st.set_page_config(page_title="丙烯笔深度调研", layout="wide")
@@ -867,7 +942,7 @@ if not df.empty:
                             <span style="color:{color}; font-weight:bold;">得分: {row['维度评分']} ⭐</span>
                         </div>
                         <p style="color:gray; font-size:11px; margin-bottom:10px;">
-                           机会指数: {row['机会指数']}
+                            机会指数: {row['机会指数']}
                         </p>
                         <p style="font-size:14px;"><b>核心投诉根因：</b><br/>
                         <span style="color:#2c3e50;">{row['痛点分布']}</span></p>
@@ -880,10 +955,6 @@ if not df.empty:
         st.markdown("---")
         st.markdown("### ☁️ 原声情感对比词云")
         
-        eng_stopwords = set(STOPWORDS)
-        custom_garbage = {'marker', 'markers', 'pen', 'pens', 'product', 'really', 'will', 'bought', 'set', 'get', 'much', 'even', 'color', 'paint', 'colors', 'work', 'good', 'great', 'love', 'used', 'using', 'actually', 'amazon', 'br'}
-        eng_stopwords.update(custom_garbage)
-
         pos_df = sub_df[sub_df['Rating'] >= 4.0]
         pos_text = " ".join(pos_df['s_text'].astype(str).str.lower().tolist())
         neg_df = sub_df[sub_df['Rating'] < 4.0]
@@ -894,16 +965,18 @@ if not df.empty:
         with col_left:
             st.subheader("🟢 高分区 (4.0-5.0 ⭐)")
             if len(pos_text.strip()) > 30:
-                wc_pos = WordCloud(width=500, height=400, background_color='white', colormap='Greens', max_words=50, stopwords=eng_stopwords, collocations=True, random_state=42).generate(pos_text)
-                st.image(wc_pos.to_array(), use_container_width=True)
+                # 调用带缓存的词云生成函数
+                wc_pos_img = generate_wordcloud_cached(pos_text, 'Greens', 42)
+                st.image(wc_pos_img, use_container_width=True)
             else:
                 st.info("样本量不足")
 
         with col_right:
             st.subheader("🔴 低分区 (1.0-3.9 ⭐)")
             if len(neg_text.strip()) > 30:
-                wc_neg = WordCloud(width=500, height=400, background_color='white', colormap='Reds', max_words=50, stopwords=eng_stopwords, collocations=True, random_state=24).generate(neg_text)
-                st.image(wc_neg.to_array(), use_container_width=True)
+                # 调用带缓存的词云生成函数
+                wc_neg_img = generate_wordcloud_cached(neg_text, 'Reds', 24)
+                st.image(wc_neg_img, use_container_width=True)
             else:
                 st.success("无明显低分痛点词")
 
@@ -980,6 +1053,7 @@ if not df.empty:
         st.markdown("---")
         
         # --- 深度市场解析 ---
+        # 这里的 extract_advanced_features 现在由顶部带有 @st.cache_data 的函数处理，速度极快
         sub_df = extract_advanced_features(sub_df)
         st.markdown("### 🎯 深度市场深度解析 (Advanced Market Insight)")
         st.markdown("#### 👥 用户画像分布 (Demographic Analysis)")
@@ -1012,76 +1086,8 @@ if not df.empty:
             global_top_3.append("其他")
 
         if not analysis_res.empty:
-            # --- 核心绘图与表格函数定义 ---
-            # 1. 缓存计算层：将正则匹配逻辑提取出来并缓存
             # =================================================================
-            @st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
-            def prepare_chart_data(data_source_id, _data_source, dims):
-                """
-                该函数负责最耗时的正则匹配计算。
-                data_source_id: 用于标识数据集（因为缓存不方便直接哈希大型DF）
-                _data_source: 加下划线表示不监控这个参数的变化，手动通过 ID 识别
-                dims: 参与计算的三个维度
-                """
-                d_x, d_y, d_b = dims[0], dims[1], dims[2]
-                
-                def get_metric_inner(target_df, dimension):
-                    if dimension == "其他": return 3.0, 0, 0, 0, "N/A", "N/A"
-                    sub_dict = FEATURE_DIC.get(dimension, {})
-                    if not sub_dict: return None, 0, 0, 0, "", ""
-                    
-                    pos_count, neg_count, all_matched_ratings = 0, 0, []
-                    hit_details, neg_texts = [], []
-
-                    for tag, keywords in sub_dict.items():
-                        clean_keys = [re.escape(k) for k in keywords if k.strip()]
-                        if not clean_keys: continue
-                        pat = '|'.join(clean_keys)
-                        mask = target_df['s_text'].str.contains(pat, na=False, flags=re.IGNORECASE)
-                        matched_df = target_df[mask]
-                        
-                        if not matched_df.empty:
-                            all_matched_ratings.extend(matched_df['Rating'].tolist())
-                            if '负面' in tag or '不满' in tag:
-                                neg_count += len(matched_df)
-                                hit_details.append(f"{tag.split('-')[-1]}({len(matched_df)})")
-                                neg_texts.extend(matched_df['s_text'].unique().tolist())
-                            elif '正面' in tag or '好评' in tag:
-                                pos_count += len(matched_df)
-
-                    if not all_matched_ratings: return None, 0, 0, 0, "未提及", "暂无痛点原声"
-                    avg_score = np.mean(all_matched_ratings)
-                    reason = " | ".join(hit_details) if hit_details else "无明显痛点标签"
-                    vocal = "\n\n---\n\n".join(list(set(neg_texts))) if neg_texts else "暂无痛点原声"
-                    return avg_score, len(all_matched_ratings), pos_count, neg_count, reason, vocal
-
-                plot_data = []
-                all_skus = _data_source['sku_spec'].unique()
-                
-                for sku in all_skus:
-                    sku_df = _data_source[_data_source['sku_spec'] == sku]
-                    sc_x, cnt_x, pc_x, nc_x, re_x, vo_x = get_metric_inner(sku_df, d_x)
-                    sc_y, cnt_y, pc_y, nc_y, re_y, vo_y = get_metric_inner(sku_df, d_y)
-                    sc_b, cnt_b, pc_b, nc_b, re_b, vo_b = get_metric_inner(sku_df, d_b)
-                    
-                    if any(v is not None for v in [sc_x, sc_y, sc_b]):
-                        parts = str(sku).split('_')
-                        short_name = f"{parts[1]}-{parts[0]}" if len(parts) > 1 else str(sku)
-                        plot_data.append({
-                            'full_sku': str(sku), 'short_name': short_name,
-                            'score_x': sc_x or 3.0, 'score_y': sc_y or 3.0, 'score_b_val': sc_b or 3.0,
-                            'total_sum': (sc_x or 3.0) + (sc_y or 3.0) + (sc_b or 3.0),
-                            'reason_x': re_x, 'reason_y': re_y, 'reason_b': re_b,
-                            'vocal_x': vo_x, 'vocal_y': vo_y, 'vocal_b': vo_b,
-                            'pos_cnt_x': pc_x, 'neg_cnt_x': nc_x,
-                            'pos_cnt_y': pc_y, 'neg_cnt_y': nc_y,
-                            'pos_cnt_b': pc_b, 'neg_cnt_b': nc_b,
-                            'cnt_x': cnt_x, 'cnt_y': cnt_y, 'cnt_b': cnt_b
-                        })
-                return pd.DataFrame(plot_data)
-
-            # =================================================================
-            # 2. 绘图展示层：只负责渲染界面，不负责正则计算
+            # 绘图展示层：只负责渲染界面，由于它不耗时，保留在这里是安全的
             # =================================================================
             def draw_sku_bubble_chart(data_source, title_label, suffix, local_dims):
                     valid_local = [d for d in local_dims if d and d != "未提及"]
@@ -1168,7 +1174,7 @@ if not df.empty:
                             st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
             # =================================================================
-            # 3. 渲染逻辑（保持不变）
+            # 渲染逻辑
             # =================================================================
             top_roles = sub_df[sub_df['feat_User_Role'] != "未提及"]['feat_User_Role'].value_counts().head(3).index.tolist()
             tab_list = st.tabs(["📊 总体分析"] + [f"👤 {r}" for r in top_roles])
@@ -1187,6 +1193,7 @@ if not df.empty:
                         if count > 0: dim_counts[dim] = count
                     role_specific_dims = sorted(dim_counts, key=dim_counts.get, reverse=True)[:3]
                     draw_sku_bubble_chart(role_sub, role, f"role_{i}_{sub_name}", role_specific_dims)
+
 
 
 
