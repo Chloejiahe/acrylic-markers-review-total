@@ -1126,7 +1126,7 @@ if not df.empty:
                         total_count = len(vocal_df)
                         st.write(f"💬 **用户评价原声回溯 ({total_count} 条)：**")
                         
-                        container_height = 500 if total_count > 5 else None
+                        container_height = 500 if total_count > 5 else 200  # 关键修改：用200替代None
                         with st.container(height=container_height):
                             for i, (_, row) in enumerate(vocal_df.iterrows()):
                                 text = row['s_text']
@@ -1421,6 +1421,7 @@ if not df.empty:
 
                     # D. 绘图（此时 final_dims 内部会自动使用样本量最大的维度）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
