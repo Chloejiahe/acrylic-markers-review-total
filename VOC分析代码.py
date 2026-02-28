@@ -1177,7 +1177,7 @@ if not df.empty:
                         # --- 新增：提取该子项的 ASIN 和评论正文 ---
                         for _, row in matched_df.iterrows():
                             evidence_list.append({
-                                "asin": row.get('ASIN', 'N/A'),
+                                "asin": row.get('Asin', 'N/A'),
                                 "text": row['s_text'],
                                 "rating": row['Rating'],
                                 "tag": sub_item
@@ -1421,6 +1421,7 @@ if not df.empty:
 
                     # D. 绘图（此时 final_dims 内部会自动使用样本量最大的维度）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
