@@ -1219,7 +1219,7 @@ if not df.empty:
                         # 新增功能：滚动展示具体评论和 ASIN
                         st.markdown("**🔍 关联评论原声 (ASIN 溯源):**")
                         # 只展示前 5 条最相关的原声，避免 expander 过长
-                        for quote in b_row['原声证据'][:5]:
+                        for quote in b_row['原声证据']:
                             st.markdown(f"""
                                 <div style="padding:8px; border-bottom:1px solid #eee; font-size:12px;">
                                     <span style="color:#e67e22; font-weight:bold;">[{quote['asin']}]</span> 
@@ -1421,6 +1421,7 @@ if not df.empty:
 
                     # D. 绘图（此时 final_dims 内部会自动使用样本量最大的维度）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
