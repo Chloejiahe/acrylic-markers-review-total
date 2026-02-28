@@ -597,6 +597,39 @@ CLASSIFICATION_RULES = {
         }
 }
 
+BUNDLE_PRODUCT_DIC = {
+    "纸质媒介 (Paper & Pads)": {
+        "黑卡纸/本": ["black paper", "black cardstock", "dark paper", "black notebook", "black pad"],
+        "绘本/写生本": ["sketchbook", "sketch pad", "drawing book", "art journal", "mixed media pad"],
+        # 注意：丙烯笔适合的是厚马克笔纸，所以保留heavyweight，去掉了薄的酒精马克笔纸描述
+        "重磅马克笔纸": ["marker paper", "heavyweight paper", "smooth cardstock", "160gsm", "200gsm", "thick paper"],
+        "涂鸦板/卡片": ["flashcards", "index cards", "diy cards", "tags"],
+        "水彩纸/多媒体纸": ["watercolor paper", "textured paper", "cold press", "mixed media paper"],
+        "黑色便利贴": ["black sticky notes", "black post-its", "dark sticky notes"]
+    },
+    "涂色与创作 (Coloring & Greeting)": {
+        "成人涂色书": ["coloring book", "adult coloring", "mandala book", "therapy coloring"],
+        "贺卡/信封": ["greeting cards", "envelopes", "invitations", "blank cards", "thank you cards"],
+        "空白标签": ["gift tags", "label tags", "price tags", "hanging tags"]
+    },
+    "勾线与细节 (Detailing & Outlining)": {
+        "极细勾线笔": ["fineliner", "micro-tip", "0.5mm pen", "ultra fine pen", "detail pen", "outline pen"],
+        "铅笔/橡皮": ["graphite pencil", "pencil", "sketching pencil", "kneaded eraser", "rubber", "electric eraser"]
+    },
+    "表面保护 (Finishing & Protection)": {
+        "亮油/保护喷雾": ["varnish", "sealer", "glossy spray", "fixative", "top coat", "clear coat"],
+        "密封胶": ["sealant", "mod podge", "acrylic sealer", "glue sealer"],
+        "遮蔽胶带": ["masking tape", "washi tape", "painter's tape", "decorative tape"]
+    },
+    "辅助与创意 (Tools & Accessories)": {
+        "镂空模板": ["stencils", "drawing template", "alphabet stencil", "pattern stencil", "shapes"],
+        "便携笔袋/盒": ["carrying case", "storage bag", "organizer pouch", "holder", "pen stand", "acrylic holder"],
+        "火漆/装饰": ["wax seal", "sealing wax", "stamps", "gold leaf", "glitter"],
+        "调色/混色": ["mixing palette", "paint tray", "dotting tools", "blending sponge"],
+        "贴纸/胶水": ["stickers", "glue pen", "adhesive", "decals"]
+    }
+}
+
 # --- 3. 数据加载函数 (已修改：统一为单一文件入口) ---
 @st.cache_data
 def load_raw_data():
@@ -734,6 +767,39 @@ def analyze_sentiments(df_sub):
         
     # 同时返回 DataFrame 和 基准分，解决 NameError
     return pd.DataFrame(results).sort_values("机会指数", ascending=False), global_avg_rating
+
+@st.cache_data
+def analyze_bundle_opportunities(df_sub):
+    """独立分析评论中提到的配件需求"""
+    bundle_results = []
+    
+    for category, sub_dict in BUNDLE_PRODUCT_DIC.items():
+        total_mentions = 0
+        hit_details = []
+        ratings_for_this_bundle = []
+        
+        for sub_item, keywords in sub_dict.items():
+            pattern = '|'.join([re.escape(k) for k in keywords])
+            # 搜索匹配的评论
+            mask = df_sub['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
+            matched_df = df_sub[mask]
+            
+            if not matched_df.empty:
+                count = len(matched_df)
+                total_mentions += count
+                ratings_for_this_bundle.extend(matched_df['Rating'].tolist())
+                hit_details.append(f"{sub_item}({count}次)")
+        
+        if total_mentions > 0:
+            avg_rating = np.mean(ratings_for_this_bundle)
+            bundle_results.append({
+                "配件大类": category,
+                "市场呼声(频次)": total_mentions,
+                "关联评价均分": round(avg_rating, 2),
+                "高频配件需求": " / ".join(hit_details)
+            })
+            
+    return pd.DataFrame(bundle_results).sort_values("市场呼声(频次)", ascending=False)
     
 # 【关键修复】将原先嵌套在内部的缓存函数提到全局，防止 Streamlit 每次重绘时重新定义导致缓存失效
 @st.cache_data(show_spinner="正在深度分析 SKU 维度表现...")
@@ -1079,6 +1145,69 @@ if not df.empty:
                 st.write("该维度暂无定义的负面关键词。")
 
         st.markdown("---")
+
+        # --- 🛒捆绑销售与配件机会分析 ---
+        st.markdown("---")
+        st.markdown("""
+            <div style="background-color: #fff3e0; padding: 15px; border-radius: 10px; border-left: 5px solid #ff9800;">
+                <h3 style='margin: 0; color: #e65100;'>🎁 捆绑销售与关联购买洞察 (Bundle Insight)</h3>
+                <p style='margin: 5px 0 0 0; font-size: 14px; color: #6d4c41;'>分析用户评论中自发提到的搭配产品，锁定关联销售机会。</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        def analyze_bundle_opportunities(df_input):
+            """独立分析函数：扫描 BUNDLE_PRODUCT_DIC 中的关键词"""
+            bundle_results = []
+            for category, sub_dict in BUNDLE_PRODUCT_DIC.items():
+                total_mentions = 0
+                hit_details = []
+                ratings_list = []
+                for sub_item, keywords in sub_dict.items():
+                    pattern = '|'.join([re.escape(k) for k in keywords])
+                    mask = df_input['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
+                    matched_df = df_input[mask]
+                    if not matched_df.empty:
+                        count = len(matched_df)
+                        total_mentions += count
+                        ratings_list.extend(matched_df['Rating'].tolist())
+                        hit_details.append(f"{sub_item}({count}次)")
+                if total_mentions > 0:
+                    bundle_results.append({
+                        "配件大类": category,
+                        "市场呼声": total_mentions,
+                        "关联评分": round(np.mean(ratings_list), 2) if ratings_list else 0,
+                        "细节": " / ".join(hit_details)
+                    })
+            return pd.DataFrame(bundle_results).sort_values("市场呼声", ascending=False)
+
+        bundle_df = analyze_bundle_opportunities(sub_df)
+
+        if not bundle_df.empty:
+            col_b1, col_b2 = st.columns([1, 1])
+            with col_b1:
+                # 侧向柱状图展示呼声
+                fig_bundle = go.Figure(go.Bar(
+                    x=bundle_df['市场呼声'],
+                    y=bundle_df['配件大类'],
+                    orientation='h',
+                    marker=dict(color='#ff9800', line=dict(color='#e65100', width=1))
+                ))
+                fig_bundle.update_layout(title="配件类别提及频次排名", height=300, margin=dict(l=20, r=20, t=40, b=20))
+                st.plotly_chart(fig_bundle, use_container_width=True, key=f"bundle_chart_{sub_name}")
+            
+            with col_b2:
+                st.write("📌 **核心搭配建议：**")
+                for _, b_row in bundle_df.iterrows():
+                    with st.expander(f"查看 {b_row['配件大类']} 的具体需求"):
+                        st.markdown(f"**高频需求：** `{b_row['细节']}`")
+                        st.markdown(f"**用户满意度：** {b_row['关联评分']} ⭐")
+                        if b_row['关联评分'] < 4.0:
+                            st.caption("💡 痛点提示：用户提及该配件时评分较低，可能是不满现有套装未包含此配件，或现有配件质量差。")
+        else:
+            st.info("💡 当前评论样本中暂未提取到明显的配件搭配需求。")
+        
+        st.write("") # 留白
+
         
         # --- 深度市场解析 ---
         # 这里的 extract_advanced_features 现在由顶部带有 @st.cache_data 的函数处理，速度极快
@@ -1267,6 +1396,7 @@ if not df.empty:
 
                     # D. 绘图（此时 final_dims 内部会自动使用样本量最大的维度）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
