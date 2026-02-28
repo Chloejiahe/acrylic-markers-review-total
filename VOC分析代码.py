@@ -601,7 +601,6 @@ BUNDLE_PRODUCT_DIC = {
     "纸质媒介 (Paper & Pads)": {
         "黑卡纸/本": ["black paper", "black cardstock", "dark paper", "black notebook", "black pad"],
         "绘本/写生本": ["sketchbook", "sketch pad", "drawing book", "art journal", "mixed media pad"],
-        # 注意：丙烯笔适合的是厚马克笔纸，所以保留heavyweight，去掉了薄的酒精马克笔纸描述
         "重磅马克笔纸": ["marker paper", "heavyweight paper", "smooth cardstock", "160gsm", "200gsm", "thick paper"],
         "涂鸦板/卡片": ["flashcards", "index cards", "diy cards", "tags"],
         "水彩纸/多媒体纸": ["watercolor paper", "textured paper", "cold press", "mixed media paper"],
@@ -610,6 +609,7 @@ BUNDLE_PRODUCT_DIC = {
     "涂色与创作 (Coloring & Greeting)": {
         "成人涂色书": ["coloring book", "adult coloring", "mandala book", "therapy coloring"],
         "贺卡/信封": ["greeting cards", "envelopes", "invitations", "blank cards", "thank you cards"],
+        "明信片": ["postcard", "postcards", "mailing cards", "blank postcards", "postal cards"], 
         "空白标签": ["gift tags", "label tags", "price tags", "hanging tags"]
     },
     "勾线与细节 (Detailing & Outlining)": {
@@ -622,9 +622,9 @@ BUNDLE_PRODUCT_DIC = {
         "遮蔽胶带": ["masking tape", "washi tape", "painter's tape", "decorative tape"]
     },
     "辅助与创意 (Tools & Accessories)": {
-        "镂空模板": ["stencils", "drawing template", "alphabet stencil", "pattern stencil", "shapes"],
+        "镂空模板": ["stencils", "drawing template", "alphabet stencil", "pattern stencil"],
         "便携笔袋/盒": ["carrying case", "storage bag", "organizer pouch", "holder", "pen stand", "acrylic holder"],
-        "火漆/装饰": ["wax seal", "sealing wax", "stamps", "gold leaf", "glitter"],
+        "火漆/装饰": ["wax seal", "sealing wax", "stamps", "gold leaf"],
         "调色/混色": ["mixing palette", "paint tray", "dotting tools", "blending sponge"],
         "贴纸/胶水": ["stickers", "glue pen", "adhesive", "decals"]
     }
@@ -1146,8 +1146,7 @@ if not df.empty:
 
         st.markdown("---")
 
-        # --- 🛒捆绑销售与配件机会分析 ---
-        st.markdown("---")
+        # --- 🛒 捆绑销售与配件机会分析 (支持查看原声与ASIN) ---
         st.markdown("""
             <div style="background-color: #fff3e0; padding: 15px; border-radius: 10px; border-left: 5px solid #ff9800;">
                 <h3 style='margin: 0; color: #e65100;'>🎁 捆绑销售与关联购买洞察 (Bundle Insight)</h3>
@@ -1155,32 +1154,46 @@ if not df.empty:
             </div>
         """, unsafe_allow_html=True)
 
-        def analyze_bundle_opportunities(df_input):
-            """独立分析函数：扫描 BUNDLE_PRODUCT_DIC 中的关键词"""
+        def analyze_bundle_opportunities_enhanced(df_input):
+            """增强版分析函数：同时记录评论原声和对应的 ASIN"""
             bundle_results = []
             for category, sub_dict in BUNDLE_PRODUCT_DIC.items():
                 total_mentions = 0
                 hit_details = []
                 ratings_list = []
+                quotes_list = [] # 用于存储具体的评论和ASIN
+                
                 for sub_item, keywords in sub_dict.items():
                     pattern = '|'.join([re.escape(k) for k in keywords])
                     mask = df_input['s_text'].str.contains(pattern, na=False, flags=re.IGNORECASE)
                     matched_df = df_input[mask]
+                    
                     if not matched_df.empty:
                         count = len(matched_df)
                         total_mentions += count
                         ratings_list.extend(matched_df['Rating'].tolist())
                         hit_details.append(f"{sub_item}({count}次)")
+                        
+                        # 提取具体的原声信息：评论内容 + ASIN + 评分
+                        for _, row in matched_df.iterrows():
+                            quotes_list.append({
+                                'text': row['s_text'],
+                                'asin': row.get('Asin'), # 确保你的df里有这一列
+                                'rating': row['Rating'],
+                                'sub_item': sub_item
+                            })
+                
                 if total_mentions > 0:
                     bundle_results.append({
                         "配件大类": category,
                         "市场呼声": total_mentions,
                         "关联评分": round(np.mean(ratings_list), 2) if ratings_list else 0,
-                        "细节": " / ".join(hit_details)
+                        "细节": " / ".join(hit_details),
+                        "原声记录": quotes_list
                     })
             return pd.DataFrame(bundle_results).sort_values("市场呼声", ascending=False)
 
-        bundle_df = analyze_bundle_opportunities(sub_df)
+        bundle_df = analyze_bundle_opportunities_enhanced(sub_df)
 
         if not bundle_df.empty:
             col_b1, col_b2 = st.columns([1, 1])
@@ -1196,17 +1209,25 @@ if not df.empty:
                 st.plotly_chart(fig_bundle, use_container_width=True, key=f"bundle_chart_{sub_name}")
             
             with col_b2:
-                st.write("📌 **核心搭配建议：**")
+                st.write("📌 **关联需求原声溯源：**")
                 for _, b_row in bundle_df.iterrows():
-                    with st.expander(f"查看 {b_row['配件大类']} 的具体需求"):
-                        st.markdown(f"**高频需求：** `{b_row['细节']}`")
-                        st.markdown(f"**用户满意度：** {b_row['关联评分']} ⭐")
-                        if b_row['关联评分'] < 4.0:
-                            st.caption("💡 痛点提示：用户提及该配件时评分较低，可能是不满现有套装未包含此配件，或现有配件质量差。")
+                    with st.expander(f"🔍 查看 {b_row['配件大类']} 相关评论 ({b_row['市场呼声']}条)"):
+                        st.markdown(f"**总体满意度：** {b_row['关联评分']} ⭐")
+                        st.markdown("---")
+                        # 循环展示每一条原声
+                        for i, quote in enumerate(b_row['原声记录'][:10]): # 最多展示10条防止页面过长
+                            # 使用小卡片样式展示原声
+                            st.markdown(f"""
+                            <div style="font-size: 13px; color: #444; background: #fafafa; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid #eee;">
+                                <b>[{quote['asin']}]</b> <span style="color: #f39c12;">({quote['rating']}⭐)</span><br>
+                                <i style="color: #666;">提到: {quote['sub_item']}</i><br>
+                                “{quote['text']}”
+                            </div>
+                            """, unsafe_allow_html=True)
+                        if len(b_row['原声记录']) > 10:
+                            st.caption(f"仅展示前10条关联原声...")
         else:
             st.info("💡 当前评论样本中暂未提取到明显的配件搭配需求。")
-        
-        st.write("") # 留白
 
         
         # --- 深度市场解析 ---
@@ -1396,6 +1417,7 @@ if not df.empty:
 
                     # D. 绘图（此时 final_dims 内部会自动使用样本量最大的维度）
                     draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
