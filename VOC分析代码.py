@@ -819,7 +819,8 @@ CLASSIFICATION_RULES = {
           '初学者 (Beginner)': ['beginner', 'newbie', 'novice', 'beginner friendly', 'good for beginners', 'easy for a beginner','just starting', 'just starting out', 'getting started', 'great starting point',
                        'starter kit', 'starter set', 'my first set',  'new to art', 'new to painting', 'new to drawing', 'first time trying',
                       'learning to draw', 'learning to paint', 'easy to learn with', 'no prior experience'
-                      ],          '办公人士 (Business/Office Professional)': ['for the office', 'at my office', 'office supplies', 'office work', 'at work', 'for my business','business meeting', 'work presentation', 'meeting notes', 'mind mapping for work', 'whiteboard at work',
+                      ],          
+          '办公人士 (Business/Office Professional)': ['for the office', 'at my office', 'office supplies', 'office work', 'at work', 'for my business','business meeting', 'work presentation', 'meeting notes', 'mind mapping for work', 'whiteboard at work',
                                   'corporate training', 'coworker', 'official report', 'signing documents', 'desk organization', 'organizing my desk'
                                  ],
           '艺术疗愈/健康追求者 (Art Therapy/Wellness Seeker)': ['art therapy', 'therapeutic', 'for relaxation', 'to relax', 'calming activity', 'for mindfulness',
@@ -1405,20 +1406,17 @@ if not df.empty:
         else:
             st.success("无明显低分痛点词")
 
-    # 原声溯源
+# 原声溯源
     st.write("")
     with st.expander(f"🔍 深度探查：真实用户评价回溯"):
         target_dim = st.selectbox("选择想要探查的痛点维度:", analysis_res['维度'].tolist(), key=f"select_dim_{selected_category}")
         
-        # --- 新增逻辑：提取核心投诉根因 ---
+        # --- 提取核心投诉根因 ---
         dim_info = analysis_res[analysis_res['维度'] == target_dim].iloc[0]
         root_cause = dim_info['痛点分布'] if '痛点分布' in dim_info else "暂无根因分析"
         dim_score = dim_info['维度评分'] if '维度评分' in dim_info else 0
-        
-        # 这里必须定义 cause_color，否则下方 markdown 会报错
         cause_color = "#c0392b" if dim_score < 3.5 else "#d35400"
         
-        # 核心投诉根因简洁版卡片
         st.markdown(f"""
             <div style="padding:12px 15px; border-radius:10px; border-left: 8px solid {cause_color}; 
                         background-color: #fff5f5; border-top:1px solid #eee; border-right:1px solid #eee;
@@ -1430,7 +1428,7 @@ if not df.empty:
             </div>
         """, unsafe_allow_html=True)
 
-        # --- 原有逻辑：原声评价列表 ---
+        # --- 原声评价列表渲染 ---
         neg_keywords = []
         if target_dim in FEATURE_DIC:
             for tag, keys in FEATURE_DIC[target_dim].items():
@@ -1457,25 +1455,35 @@ if not df.empty:
                     total_count = len(vocal_df)
                     st.write(f"💬 **用户评价原声回溯 ({total_count} 条)：**")
                     
-                    container_height = 500 if total_count > 5 else 200  # 关键修改：用200替代None
+                    container_height = 500 if total_count > 5 else 200 
                     with st.container(height=container_height):
                         for i, (_, row) in enumerate(vocal_df.iterrows()):
                             text = row['s_text']
+                            asin = row.get('Asin', 'N/A')
+                            rating = row['Rating']
+                            
                             # 负面关键词高亮逻辑
                             sorted_keywords = sorted(list(set(neg_keywords)), key=len, reverse=True)
                             for word in sorted_keywords:
                                 if word and word.lower() in text.lower():
                                     text = re.sub(f"({re.escape(word)})", r"<span style='color:#ED4337;font-weight:bold;background-color:#FFF0F0;padding:0 2px;border-radius:2px;'>\1</span>", text, flags=re.IGNORECASE)
                             
-                            st.markdown(f"**[{row['Rating']}⭐]** {text}", unsafe_allow_html=True)
-                            if i < total_count - 1:
-                                st.divider()
+                            # 渲染每一条评论，带上 ASIN 标签
+                            st.markdown(f"""
+                                <div style="padding:10px 5px; border-bottom:1px solid #f0f0f0;">
+                                    <div style="display: flex; align-items: center; margin-bottom: 5px; gap: 10px;">
+                                        <span style="color:#1f77b4; font-weight:bold; font-family:monospace; background:#e1f5fe; padding:2px 8px; border-radius:12px; font-size:11px; border:1px solid #b3e5fc;">{asin}</span>
+                                        <span style="color:#f1c40f; font-size:14px;">{'★'*int(rating)}{'☆'*(5-int(rating))}</span>
+                                    </div>
+                                    <div style="color:#2c3e50; line-height:1.6; font-size:14px; padding-left: 2px;">
+                                        {text}
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
                 else:
                     st.info("该维度下暂未匹配到对应的负面评价原声。")
         else:
             st.write("该维度暂无定义的负面关键词。")
-
-    st.markdown("---")
 
     # --- 🛒 捆绑销售与配件机会分析 ---
     st.markdown("""
@@ -1751,6 +1759,7 @@ if not df.empty:
 
                 # D. 绘图
                 draw_sku_bubble_chart(role_sub, role, suffix, role_specific_dims)
+
 
 
 
